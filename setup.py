@@ -1,6 +1,7 @@
 from setuptools import setup, find_packages
 import subprocess
 import sys
+import os
 
 # Attempt to create a Conda environment from a .yml file
 try:
@@ -20,6 +21,8 @@ try:
 except subprocess.CalledProcessError:
     print("Failed to force-install the pip package.")
     sys.exit(1)
+    
+os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
 
 setup(
     name='YourPackageName',
