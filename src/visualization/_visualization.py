@@ -180,3 +180,53 @@ def counts(df_list, xticks=None, fig=None):
         plt.xticks(np.arange(len(df_list)), xticks, rotation=90)
     plt.ylabel('counts')
     plt.show()
+    
+    
+    
+def plot_intensity(x: np.ndarray,
+                   masks: np.ndarray,
+                   v: int,
+                   mz_val: float):
+    
+    """ Function to plot the intensity of one molecule across different sections
+    
+    Args
+    ----
+    x: np.ndarray
+        MALDI-MSI data
+    
+    mask: np.ndarray
+        corresponding masks for MALDI-MSI data
+        
+    v: int
+        number of molecule to plot its intensites across sections
+        
+    mz_val: float
+        correponding value of mass-to-charge ratio (m/z) for molecule v
+        
+    """
+    
+    fig = plt.figure(None,(8,8), dpi=100)
+    gs = plt.GridSpec(5,5)
+    
+    cm = plt.cm.get_cmap('bwr')
+    xmin, xmax = np.percentile(x[:,:,v][masks[:,:,v]], (0.1, 99.90))
+    xnew = np.linspace(xmin, xmax, 50)
+
+    for i, s in enumerate(range(x.shape[1])):
+        plt.subplot(gs[i])
+        n, bins, patches = plt.hist(x[:,s,v][masks[:,s,v]], bins=xnew,
+                                    color="gray", alpha=0.6, density=True, edgecolor='w')
+        plt.ylim([0,2])
+
+        if i == 0:
+            plt.ylabel('density')
+        plt.xlabel('intensity')
+        
+    if mz_val:
+        plt.suptitle(mz_val)
+        
+    plt.show()
+    
+    
+    
