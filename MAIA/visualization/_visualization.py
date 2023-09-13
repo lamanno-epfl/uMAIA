@@ -3,6 +3,8 @@ import numpy as np
 from ..utils.tools import extract_image_coordinates
 from ..peak_finding import PeakFinder
 import pandas as pd
+import numpyro
+import scipy.stats as stats
 
 
 def get_cmap(n, name='hsv'):
@@ -190,7 +192,7 @@ def plot_intensity(x: np.ndarray,
     
     """ Function to plot the intensity of one molecule across different sections
     
-    Args
+    Args:
     ----
     x: np.ndarray
         MALDI-MSI data
@@ -228,5 +230,134 @@ def plot_intensity(x: np.ndarray,
         
     plt.show()
     
+    
+def normalized_hist(x_tran: np.ndarray, x: np.ndarray, 
+                    mask: np.ndarray,
+                    svi_result: numpyro.infer.svi.SVIRunResult,
+                    acquisitions: list, 
+                    v: int,
+                    n_cov: int = 1,
+                    mz_val: float = None):
+    """ Function to plot the normalized vs raw data histogram and the fitted model
+    
+    Args:
+    ----
+    x_tran: np.ndarray
+        Normalized MALDI-MSI data
+    
+    x: np.ndarray
+        Raw MALDI-MSI data
+        
+    mask: np.ndarray
+        corresponding masks for MALDI-MSI data
+        
+    svi_result: numpyro.infer.svi.SVIRunResult
+        SVI results
+        
+    v: int
+        number of molecule to plot its intensites across sections
+        
+    n_cov: int
+        number of covariates
+        
+    mz_val: float
+        correponding value of mass-to-charge ratio (m/z) for molecule v
+    """
+    weights = svi_result.params['weights_auto_loc']
+    locs = svi_result.params['locs_auto_loc']
+    scale1 = svi_result.params['scale1_auto_loc']
+    sigma_v = svi_result.params['sigma_v_auto_loc']
+    b_lambda = svi_result.params['b_lambda_auto_loc']
+    b_gamma = svi_result.params['b_gamma_auto_loc']
+    delta = svi_result.params['delta_auto_loc']
+    sigma_s = svi_result.params['sigma_s_auto_loc']
+    error = svi_result.params['error_auto_loc']
+    delta_ = svi_result.params['delta_']
+    loc0_delta = svi_result.params['loc0_delta']
+    
+    N, S, V = x.shape
+    fig = plt.figure(None,(15,80))
+    gs = plt.GridSpec(S,3)
+    small_num = 0.0002
+    masks = [np.load(f'/data/SV_DAngelo/Hannah/zebrafish_masks/{section}/mask.npy') for section in acquisitions]
+    
+    
+    print(f'molecule susceptibility: {b_lambda[v].mean():.2f}')
+
+    cm = plt.cm.get_cmap('bwr')
+    xmin, xmax = np.percentile(x[:,:,v][mask[:,:,v]], (0.1, 99.90))
+    xmax += 1.
+    xnew = np.linspace(xmin, xmax, 50)
+    # vmax = np.exp(np.percentile(x[:,:,v][mask[:,:,v]], 99.9)) - small_num
+    # 
+
+    vmax_raw = np.percentile(x[:,:,v][mask[:,:,v]], 99.5)
+    vmax_trans = np.percentile(x_tran[:,:,v][mask[:,:,v]], 99.5)
+
+    for i, s in enumerate(range(S)):
+        plt.subplot(gs[i,0])
+        # try:
+        #     #plt.title(f'section: {s}, sens: {b_gamma[s][0]:.2f}, lambda sum: {b_lambda[v]:.2f}, batch_factor: {(b_gamma[s]*b_lambda[v]):.2f}')
+        # except:
+            #plt.title(f'section: {s}, sens: {b_gamma[s]:.2f}, lambda sum: {b_lambda[v]:.2f}, batch_factor: {(b_gamma[s]*b_lambda[v]):.2f}')
+        plt.hist(x[:,s,v][mask[:,s,v]], bins=30, density=True,color='gray', alpha=0.2)
+        plt.hist(x_tran[:,s,v][mask[:,s,v]], bins=30, density=True,color='k',histtype='step', alpha=0.9)
+        plt.axvline(locs[v], c="b")
+        plt.plot(xnew, weights[s,v][0] * stats.norm(locs[v], scale1[v]).pdf(xnew), "b")
+
+        # foreground distribution
+        try:
+            plt.axvline(locs[v] + delta_[s,v] + b_gamma[s] * b_lambda[v] + error[s,v] + loc0_delta, c="red")
+            plt.plot(xnew, weights[s,v][1] * stats.norm(locs[v] + delta_[s,v] + b_gamma[s] * b_lambda[v]+ error[s,v] + loc0_delta,
+                                                        sigma_v[v] + sigma_s[s]).pdf(xnew), "red")
+        except:
+            print('delta')
+            plt.axvline(locs[v] + delta[v] + b_gamma[s] * b_lambda[v] + loc0_delta, c="red")
+            plt.plot(xnew, weights[s,v][1] * stats.norm(locs[v]+ delta[v] + b_gamma[s] * b_lambda[v] + error[s,v] + loc0_delta,
+                                                        sigma_v[v] + sigma_s[s]).pdf(xnew), "red")
+        
+        for c in range(n_cov):
+            plt.axvline(np.unique(locs[v] + delta_[:,v])[c], c="black", alpha=0.5, linestyle='--')
+        plt.axvline(locs[v] + delta_[s,v], c="black")
+        
+        plt.xlim(xmin-2., xmax)
+        plt.ylim([0,1.])
+        
+        
+        if i == 0:
+            plt.ylabel('density')
+        plt.xlabel('intensity')
+        
+        plt.subplot(gs[i,1])
+        
+        img = place_image(masks, x, v, s, np.log(small_num))
+        #print(x[:,s,v][mask[:,s,v]].sum())
+        plt.imshow(img, cmap='Greys', interpolation='none',vmax=vmax_raw, vmin=np.log(small_num))
+        plt.axis('off')
+        if i == 0:
+            plt.title('Original')
+            
+        plt.subplot(gs[i,2])
+        img = place_image(masks, x_tran, v, s, np.log(small_num))
+        plt.imshow(img, cmap='Greys', interpolation='none',vmax=vmax_trans, vmin=np.log(small_num))
+        plt.axis('off')
+        if i == 0:
+            plt.title('Normalized')
+        
+    plt.colorbar()
+    
+    if mz_val:
+        plt.suptitle('m/z value:', mz_val)
+    plt.tight_layout()
+    plt.show()
+    
+    
+    
+def place_image(mask_list, tranformed_values, v, s, small_num):
+    img = np.zeros(mask_list[s].shape).flatten()
+    #img[mask_list[s].flatten()] = np.exp(tranformed_values[:np.sum(mask_list[s]),s,v]) - small_num
+    img[mask_list[s].flatten()] = tranformed_values[:np.sum(mask_list[s]),s,v]
+    img[~mask_list[s].flatten().astype(bool)] = small_num
+    return img.reshape(mask_list[s].shape)
     
     
