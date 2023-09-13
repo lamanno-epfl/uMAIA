@@ -326,4 +326,5 @@ def save_images(smz, df:pd.DataFrame, filepath:str, mz_list:list=None,  normaliz
         X.X[:,i] = img.flatten()
     # save into anndata h5ad format
     X.var.columns = X.var.columns.astype(str) # convert variables to strings
+    X.uns["img_shape"] = list(img_shape)
     X.write(filepath, compression='gzip')
