@@ -221,9 +221,9 @@ class MoleculeMatcher:
         m = gp.Model('netflow')
         m.Params.LogToConsole = 0 # suppress output
         m.Params.Threads = self.num_threads
-        x = m.addMVar(shape=len(edge_cost),  vtype=gp.BINARY, name="x")
+        x = m.addMVar(shape=len(edge_cost),  vtype=gp.GRB.BINARY, name="x")
         # Set objective
-        m.setObjective(x @ np.array(list(edge_cost.values())).flatten(), gp.MINIMIZE)
+        m.setObjective(x @ np.array(list(edge_cost.values())).flatten(), gp.GRB.MINIMIZE)
         # add constraints
         m.addConstr(E_in @ x == E_out @ x) # flow is conserved
         m.addConstr(E_in @ x == 1)
