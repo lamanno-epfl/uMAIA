@@ -6,6 +6,7 @@ from tqdm import tqdm
 from scipy.ndimage.filters import gaussian_filter
 import numpyro
 import os
+import anndata
 
 def extract_image_coordinates(coordinates, img_shape, values):
     """extract image from IBD files where coordinates are assigned to each pixel
@@ -100,7 +101,7 @@ def read_files(files:list):
 
 
 def read_images_masks(acquisitions:list,
-                      path_images:str, path_masks:str,
+                      path_images:str, path_masks:str = None,
                       gaussian_smoothing:bool = False, gaussian_sigma:float = 0.3,
                       log_transform:bool = True, epsilon:float = 0.0002):
     """ Reading images and masks saved for normalization step
@@ -130,21 +131,26 @@ def read_images_masks(acquisitions:list,
     """
     
     
-    masks = [np.load(f'{path_masks}/{section}/mask.npy') for section in acquisitions]
-    mask_ix_list = [np.argwhere(x.flatten()).flatten() for x in masks]
     
-    PATH_DATA = f'{path_images}.zarr'
-    
-    root = zarr.open(PATH_DATA, mode='rb')
+    root = zarr.open(path_images, mode='rb')
     PATH_MZ = np.sort(list(root.group_keys()))
     
+    
+    if path_masks:
+        masks = [np.load(os.path.join(path_masks, name, 'mask.npy')) for name in acquisitions]
+    else:
+        masks = [np.ones_like(root[PATH_MZ[0]][i_s][:]) for i_s in range(len(acquisitions))]
+    
+    mask_ix_list = [np.argwhere(x.flatten()).flatten() for x in masks]
+    
+    # initialize two variables for the data and the mask
     x = np.ones((np.max([len(np.argwhere(x.flatten()).flatten()) for x in masks]), len(masks), len(PATH_MZ))) 
+    mask = np.zeros_like(x, dtype=bool)
     
     if log_transform==True:
-        x = x * np.log(epsilon)
-            
-    mask = np.zeros_like(x, dtype=bool)
-
+        x = np.log(x + epsilon)
+    
+    
     for i_v, mz in tqdm(enumerate(PATH_MZ), desc="Loading Data..."): # for a single molecule:
 
         for i_s in range(len(acquisitions)): # for a single molecule across the sections
@@ -159,7 +165,7 @@ def read_images_masks(acquisitions:list,
                 
             if log_transform==True:
                 if np.sum(image.astype(float)) == 0.0:
-                    image = np.ones_like(image).astype(float) * np.log(epsilon)
+                    image = np.log(np.ones_like(image).astype(float) + epsilon)
                 else:
                     image = np.log(np.nan_to_num(image).astype(float) + epsilon)
 
@@ -168,9 +174,97 @@ def read_images_masks(acquisitions:list,
             img_masked = image.flatten()[mask_ix_list[i_s]]
             x[:len(mask_ix_list[i_s]), i_s, i_v] = img_masked
             mask[:len(mask_ix_list[i_s]), i_s, i_v] = True 
+
+    if not path_masks:
+        masks = np.ones_like(x)
             
     print('Data Loaded Successfully.')
     return x, mask
+
+
+def createSaveDirectory(path_save):
+    """ Helper function to create a new directory for saved results
+    
+    Args:
+    ----
+    path_save:  str
+    """
+    # check that the directory does not already exist
+    
+    if not os.path.isdir(path_save):
+        os.mkdir(path_save)
+    else:
+        print(f'Directory at {path_save} already exists')
+        
+def filterSparseImages(df_list, num_pixels=50, percentile=None, masks=None):
+    df_list_2 = []
+    for i, df in enumerate(df_list):
+        
+        if num_pixels:
+            df = df[df.num_pixels > num_pixels]
+        else:
+            df = df[df.num_pixels > np.percentile(df.num_pixels.values, percentile)] # keep if there are more than a certain number of signals inside the tissue
+        df_list_2.append(df)
+
+    return np.array(df_list_2)
+
+def to_zarr(PATH_SAVE:str, acquisitions:list, df_filter:pd.DataFrame, images_list:list):
+    """ Function to save matched molecules into zarr file
+    
+    Args:
+    ----
+    PATH_SAVE: str
+        Path to save the .zarr file
+    
+    acquisitions: list
+        list of acquisition names
+        
+    df_filter: pd.DataFrame
+        matched file for creating images
+        
+    images_list: list
+        paths of anndata objects
+        
+    """
+    
+    # initialise dataset
+    root = zarr.open(PATH_SAVE, mode='w')
+
+    for s in tqdm(np.arange(0, len(acquisitions))): # iterate over sections
+
+        # load the file in question
+        images = anndata.read_h5ad(images_list[s]) 
+        img_shape = images.uns['img_shape']
+        # subset the df_match for the section
+        df_match_sub = df_filter[df_filter.section_ix == s]
+        # retrieve the complete set of observed molecules from section S
+        mz_values = images.var.values.flatten()
+        
+        idx_lipid = [] # initialize list for indexes of identified compounds
+        mz_values_ref = [] # mz values (as str)
+        for i, mz in enumerate(df_match_sub.mz_estimated.values):
+            # extract the image
+            argmin = np.argmin(np.abs(mz_values - mz))
+            if np.abs(mz_values - mz)[argmin] <= 0.005:
+                idx_lipid.append(argmin)
+                mz_values_ref.append(df_match_sub.mz_estimated_total.values[i])
+        idx_lipid = np.array(idx_lipid).astype(int)
+        images_lipid = images.X[:,idx_lipid] # subset the images to include only those of interest
+        mz_values_ref = [f'{x:.3f}' for x in mz_values_ref] # corresponding mz to the subsetted images
+        del images # remove images from memory
+
+
+        # iterate over lipids
+        for i, mz in enumerate(mz_values_ref):
+            # create subfoloder if it doesn't already exist
+            if not os.path.isdir(os.path.join(PATH_SAVE, mz)):
+                os.mkdir(os.path.join(PATH_SAVE, mz))
+            # select_image
+            img = images_lipid[:,i]
+            # reshape image
+            img = img.reshape(img_shape)
+            # save image to path
+            root.create_dataset(f'{mz}/{s}', data=img)    
 
 
 def save_svi(svi_result: numpyro.infer.svi.SVIRunResult,
