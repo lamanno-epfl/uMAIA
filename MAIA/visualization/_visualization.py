@@ -6,8 +6,9 @@ import pandas as pd
 import numpyro
 import scipy.stats as stats
 import anndata
-import zarr
 import tqdm
+import zarr
+
 
 def get_cmap(n, name='hsv'):
     '''Returns a function that maps each index in 0, 1, ..., n-1 to a distinct 
