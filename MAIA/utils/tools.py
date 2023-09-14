@@ -5,8 +5,9 @@ import zarr
 from tqdm import tqdm
 from scipy.ndimage.filters import gaussian_filter
 import numpyro
-import os
 import anndata
+import os
+
 
 def extract_image_coordinates(coordinates, img_shape, values):
     """extract image from IBD files where coordinates are assigned to each pixel
