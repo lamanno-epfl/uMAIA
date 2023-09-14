@@ -5,7 +5,9 @@ from ..peak_finding import PeakFinder
 import pandas as pd
 import numpyro
 import scipy.stats as stats
-
+import anndata
+import zarr
+import tqdm
 
 def get_cmap(n, name='hsv'):
     '''Returns a function that maps each index in 0, 1, ..., n-1 to a distinct 
@@ -52,7 +54,7 @@ def plot_freqmz(smz, mzrange:tuple, figsize:tuple=(30,10), ylim:int=1000, thresh
     return PF
 
 
-def image_mz(smz, df:pd.DataFrame, mz_list:list, figsize:tuple=(15,15), ylim=None, cmap='inferno', img_shape=None, limit=0.01, normalize='tic', clip=99, coordinates=None):
+def image_mz(smz, df:pd.DataFrame, mz_list:list, figsize:tuple=(15,15), ylim=None, cmap='inferno', img_shape=None, limit=0.01, normalize='tic', clip=99):
     """
     Image molecule in the dataset with the estimated m/z closest to the queried mz.
     Visualize the spectrum beside the image including the bin that was chosen
@@ -90,7 +92,7 @@ def image_mz(smz, df:pd.DataFrame, mz_list:list, figsize:tuple=(15,15), ylim=Non
         img = np.clip(img, 0, percentile)
 
         if img.shape[0] < np.multiply(*img_shape):
-            img = extract_image_coordinates(coordinates, img_shape, img)
+            img = extract_image_coordinates(smz.reader.coordinates, img_shape, img)
         else:
             img = img[:np.multiply(*img_shape)].reshape(img_shape)
         ax.imshow(img, interpolation='none', cmap=cmap)
@@ -351,8 +353,65 @@ def normalized_hist(x_tran: np.ndarray, x: np.ndarray,
     plt.tight_layout()
     plt.show()
     
+
+
+            
+def showMatchedImages(PATH_SAVE, indexes,acquisitions, vmax='constant', figsize=(12,15) ):
+
+    """
+    Function to plot frequency spectrum alongside intensity spectrum for specific ranges.
+    
+    Args
+    ----
+
+    PATH_SAVE: str
+        Path to .zarr object
+    indexes: list[int]
+        List of integers corresponding to molecules from root.group_keys()
+    acquisitions: List
+        List of acquisition names
+    vmax: str
+        if 'constant' will apply the same vmax to all acquisitions per molecule. Otherwise will show a different vmax per image
+    figsize: Tuple
+        Indicate figure size
+
+    """
+    
+    root = zarr.open(PATH_SAVE, mode='rb')
+    mz_list = np.array(list(root.group_keys()))
     
     
+    fig = plt.figure(None,figsize,dpi=200)
+    gs = plt.GridSpec(len(acquisitions), len(indexes))
+
+    for im, mz in enumerate(mz_list[indexes]):
+        images = []
+
+        for i_s in range(len(acquisitions)):
+            # add label for section name
+            try:
+                img = root[mz][i_s][:]
+                images.append(img)
+            except:
+                images.append(np.zeros(img.shape))
+        vm = np.max([np.percentile(image, 99) for image in images])
+        for i_s, img in enumerate(images):
+            plt.subplot(gs[i_s, im])
+            if i_s == 0:
+                plt.title( mz)
+            if im == 0:
+                plt.ylabel(acquisitions[i_s][:20], fontdict={'fontsize':4})
+            try:
+                if vmax =='constant':
+                    plt.imshow(img, vmax=vm, interpolation='none')
+                else:
+                    plt.imshow(img, interpolation='none')
+                plt.xticks([])
+                plt.yticks([])
+            except:
+                plt.xticks([])
+                plt.yticks([])
+
 def place_image(mask_list, tranformed_values, v, s, small_num):
     img = np.zeros(mask_list[s].shape).flatten()
     #img[mask_list[s].flatten()] = np.exp(tranformed_values[:np.sum(mask_list[s]),s,v]) - small_num
