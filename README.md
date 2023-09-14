@@ -10,16 +10,11 @@ To begin, install the environment by navigating to the /MAIA directory and runni
 ### Gurobi
 The molecule matching portion of the pipeline requires Gurobi. You will need to (1) install the Gurobi installer and (2) activate a license that is free for those are affiliated with an academic institution. Concerning (1), download the archive with 
 
-`wget https://packages.gurobi.com/9.1/gurobi9.1.2_linux64.tar.gz`
+`wget https://packages.gurobi.com/9.1/gurobi9.1.2_linux64.tar.gz` to the directory you want to install it in.
 
-Move it into the directory you want to install it with
+Unpack the archive with
 
-`mv gurobi9.1.2_linux64.tar.gz ~/opt/`
-
-Unpack the archive
-
-`cd ~/opt/
-tar -xzvf gurobi9.1.2_linux64.tar.gz`
+`tar -xzvf gurobi9.1.2_linux64.tar.gz`
 
 Activate the license with
 
