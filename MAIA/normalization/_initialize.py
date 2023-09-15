@@ -71,6 +71,7 @@ def _init_gmm(x, mask):
         weights_[v, :] = weights_[v, sorted_indices[v, :]]
         
         
+    mu_[:, 0] = np.percentile(mu_[:, 0], 25)
     return (mu_, sigma_)
 
 
@@ -107,13 +108,12 @@ def _estimate_priors(mu_, sigma_, visualize=False, shape=None):
         'loc0_delta': loc0_delta  
     }
     
-    #if init_values == None:
     ub_scale1 = np.median(np.sqrt(sigma_[:, 1]))
     lb_scale1 = ub_scale1 / 2
 
     init_locs = jnp.ones(V) * mu0_b
     init_weights = jnp.ones((S, V, K)) / K
-    init_scale1 = jnp.ones(V) * lb_scale1 #np.median(np.sqrt(sigma_[:, 0]))
+    init_scale1 = jnp.ones(V) * 0.01 #np.median(np.sqrt(sigma_[:, 0]))
     init_sigmav = jnp.ones(V) * lb_scale1
     init_delta = jnp.expand_dims(jnp.array(mu_[:, 1] - mu_[:, 0]), axis=(0,1,2))
 

@@ -282,7 +282,7 @@ def normalized_hist(x_tran: np.ndarray, x: np.ndarray,
     fig = plt.figure(None,(15,80))
     gs = plt.GridSpec(S,3)
     small_num = 0.0002
-    masks = [np.load(f'/data/SV_DAngelo/Hannah/zebrafish_masks/{section}/mask.npy') for section in acquisitions]
+    masks = [np.load(f'/data/SV_DAngelo/Hannah/processedData/LBA/brain2/masks/{section}/mask.npy') for section in acquisitions]
     
     
     print(f'molecule susceptibility: {b_lambda[v].mean():.2f}')

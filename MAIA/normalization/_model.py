@@ -56,7 +56,7 @@ def model(data, mask, covariate_vector=None, priors_hyperparameters=None):
                                                jnp.full((V,), 1))
                           )
         
-        scale1 = numpyro.sample('scale1', dist.Uniform(jnp.full((V,), 0.05),
+        scale1 = numpyro.sample('scale1', dist.Uniform(jnp.full((V,), 0.01),
                                                     jnp.full((V,), 0.5))
                             )
         
