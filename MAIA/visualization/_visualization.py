@@ -211,8 +211,10 @@ def plot_intensity(x: np.ndarray,
         
     """
     
-    fig = plt.figure(None,(8,8), dpi=100)
-    gs = plt.GridSpec(5,5)
+    fig = plt.figure(None,(10,10), dpi=100)
+    n_row = 5
+    n_col = int(np.ceil(x.shape[1] / n_row))
+    gs = plt.GridSpec(n_row, n_col)
     
     cm = plt.cm.get_cmap('bwr')
     xmin, xmax = np.percentile(x[:,:,v][masks[:,:,v]], (0.1, 99.90))
@@ -240,6 +242,7 @@ def normalized_hist(x_tran: np.ndarray, x: np.ndarray,
                     acquisitions: list, 
                     v: int,
                     n_cov: int = 1,
+                    epsilon: float = 0.0002,
                     mz_val: float = None):
     """ Function to plot the normalized vs raw data histogram and the fitted model
     
@@ -260,8 +263,11 @@ def normalized_hist(x_tran: np.ndarray, x: np.ndarray,
     v: int
         number of molecule to plot its intensites across sections
         
-    n_cov: int
+    n_cov: int - default: 1
         number of covariates
+        
+    epsilon: float - default: 0.0002
+        small number to make sure log transform does not return NaN
         
     mz_val: float
         correponding value of mass-to-charge ratio (m/z) for molecule v
@@ -281,7 +287,6 @@ def normalized_hist(x_tran: np.ndarray, x: np.ndarray,
     N, S, V = x.shape
     fig = plt.figure(None,(15,80))
     gs = plt.GridSpec(S,3)
-    small_num = 0.0002
     masks = [np.load(f'/data/SV_DAngelo/Hannah/processedData/LBA/brain2/masks/{section}/mask.npy') for section in acquisitions]
     
     
@@ -291,7 +296,7 @@ def normalized_hist(x_tran: np.ndarray, x: np.ndarray,
     xmin, xmax = np.percentile(x[:,:,v][mask[:,:,v]], (0.1, 99.90))
     xmax += 1.
     xnew = np.linspace(xmin, xmax, 50)
-    # vmax = np.exp(np.percentile(x[:,:,v][mask[:,:,v]], 99.9)) - small_num
+    # vmax = np.exp(np.percentile(x[:,:,v][mask[:,:,v]], 99.9)) - epsilon
     # 
 
     vmax_raw = np.percentile(x[:,:,v][mask[:,:,v]], 99.5)
@@ -333,16 +338,16 @@ def normalized_hist(x_tran: np.ndarray, x: np.ndarray,
         
         plt.subplot(gs[i,1])
         
-        img = place_image(masks, x, v, s, np.log(small_num))
+        img = place_image(masks, x, v, s, np.log(epsilon))
         #print(x[:,s,v][mask[:,s,v]].sum())
-        plt.imshow(img, cmap='Greys', interpolation='none',vmax=vmax_raw, vmin=np.log(small_num))
+        plt.imshow(img, cmap='Greys', interpolation='none',vmax=vmax_raw, vmin=np.log(epsilon))
         plt.axis('off')
         if i == 0:
             plt.title('Original')
             
         plt.subplot(gs[i,2])
-        img = place_image(masks, x_tran, v, s, np.log(small_num))
-        plt.imshow(img, cmap='Greys', interpolation='none',vmax=vmax_trans, vmin=np.log(small_num))
+        img = place_image(masks, x_tran, v, s, np.log(epsilon))
+        plt.imshow(img, cmap='Greys', interpolation='none',vmax=vmax_trans, vmin=np.log(epsilon))
         plt.axis('off')
         if i == 0:
             plt.title('Normalized')
@@ -413,11 +418,11 @@ def showMatchedImages(PATH_SAVE, indexes,acquisitions, vmax='constant', figsize=
                 plt.xticks([])
                 plt.yticks([])
 
-def place_image(mask_list, tranformed_values, v, s, small_num):
-    img = np.zeros(mask_list[s].shape).flatten()
-    #img[mask_list[s].flatten()] = np.exp(tranformed_values[:np.sum(mask_list[s]),s,v]) - small_num
-    img[mask_list[s].flatten()] = tranformed_values[:np.sum(mask_list[s]),s,v]
-    img[~mask_list[s].flatten().astype(bool)] = small_num
-    return img.reshape(mask_list[s].shape)
+def place_image(masks_list, tranformed_values, v, s, epsilon):
+    img = np.zeros(masks_list[s].shape).flatten()
+    #img[mask_list[s].flatten()] = np.exp(tranformed_values[:np.sum(mask_list[s]),s,v]) - epsilon
+    img[masks_list[s].flatten()] = tranformed_values[:np.sum(masks_list[s]),s,v]
+    img[~masks_list[s].flatten().astype(bool)] = epsilon
+    return img.reshape(masks_list[s].shape)
     
     

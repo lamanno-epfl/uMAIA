@@ -48,6 +48,7 @@ def filter_mz(df:pd.DataFrame, mz_list:list, threshold:float=0.005):
     ix = np.argwhere(df.mz_estimated.apply(lambda x: np.min(np.abs(x - mz_list))).values >= threshold).flatten()
     return df.iloc[ix]
 
+
 def filter_1stdecimal(df:pd.DataFrame, first_decimal_range:tuple=(1, 9)):
     """
     Remove values according to the first digit after the decimal in the mz value
@@ -89,7 +90,6 @@ def extract_contours_from_binary(mask):
     return contours
 
 
-
 def read_files(files:list):
     df_list = []
     for file in files:
@@ -100,12 +100,12 @@ def read_files(files:list):
     return df_list
 
 
-
 def read_images_masks(acquisitions:list,
                       path_images:str, path_masks:str = None,
                       gaussian_smoothing:bool = False, gaussian_sigma:float = 0.3,
                       log_transform:bool = True, epsilon:float = 0.0002):
-    """ Reading images and masks saved for normalization step
+    """ Reading images and masks saved for normalization step,
+    also returns masks_list
     
     Args:
     ----
@@ -138,14 +138,14 @@ def read_images_masks(acquisitions:list,
     
     
     if path_masks:
-        masks = [np.load(os.path.join(path_masks, name, 'mask.npy')) for name in acquisitions]
+        masks_list = [np.load(os.path.join(path_masks, name, 'mask.npy')) for name in acquisitions]
     else:
-        masks = [np.ones_like(root[PATH_MZ[0]][i_s][:]) for i_s in range(len(acquisitions))]
+        masks_list = [np.ones_like(root[PATH_MZ[0]][i_s][:]) for i_s in range(len(acquisitions))]
     
-    mask_ix_list = [np.argwhere(x.flatten()).flatten() for x in masks]
+    mask_ix_list = [np.argwhere(x.flatten()).flatten() for x in masks_list]
     
     # initialize two variables for the data and the mask
-    x = np.ones((np.max([len(np.argwhere(x.flatten()).flatten()) for x in masks]), len(masks), len(PATH_MZ))) 
+    x = np.ones((np.max([len(np.argwhere(x.flatten()).flatten()) for x in masks_list]), len(masks_list), len(PATH_MZ))) 
     mask = np.zeros_like(x, dtype=bool)
     
     if log_transform==True:
@@ -177,10 +177,10 @@ def read_images_masks(acquisitions:list,
             mask[:len(mask_ix_list[i_s]), i_s, i_v] = True 
 
     if not path_masks:
-        masks = np.ones_like(x)
+        masks_list = np.ones_like(x)
             
     print('Data Loaded Successfully.')
-    return x, mask
+    return x, mask, masks_list
 
 
 def createSaveDirectory(path_save):
@@ -196,6 +196,7 @@ def createSaveDirectory(path_save):
         os.mkdir(path_save)
     else:
         print(f'Directory at {path_save} already exists')
+     
         
 def filterSparseImages(df_list, num_pixels=50, percentile=None, masks=None):
     df_list_2 = []
@@ -208,6 +209,7 @@ def filterSparseImages(df_list, num_pixels=50, percentile=None, masks=None):
         df_list_2.append(df)
 
     return np.array(df_list_2)
+
 
 def to_zarr(PATH_SAVE:str, acquisitions:list, df_filter:pd.DataFrame, images_list:list):
     """ Function to save matched molecules into zarr file

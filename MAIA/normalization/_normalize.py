@@ -23,7 +23,7 @@ def normalize(data,
     
    
     if init_state==None:
-        init_state = initialize(data, mask, visualize=False, subsample=subsample, idx=idx)
+        init_state = initialize(data, mask, subsample=subsample, idx=idx)
     
     if subsample==True:
         if idx==None:
@@ -65,10 +65,9 @@ def normalize(data,
     
     
     if covariate_vector == None:
-        covariate_vector = jnp.array([0,0,0,0,0,0,0,0,0,0,
-                              0,
-                            ])
-    n_cov = 1 #len(jnp.unique(covariate_vector)) 
+        covariate_vector = np.zeros((S, ), dtype=np.int8)
+    n_cov = len(np.unique(covariate_vector)) 
+    covariate_vector = jnp.array(covariate_vector)
     
     # D_matrix
     D_matrix_ones = jnp.zeros((n_cov,S))

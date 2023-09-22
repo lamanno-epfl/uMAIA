@@ -2,7 +2,7 @@ from jax import pure_callback, random
 import jax.numpy as jnp
 import optax
 import tqdm
-
+import numpy as np
 import numpyro
 from numpyro import handlers
 from numpyro.contrib.funsor import config_enumerate, infer_discrete
@@ -15,13 +15,10 @@ def model(data, mask, covariate_vector=None, priors_hyperparameters=None):
     N, S, V = data.shape
     K = 2
     
-    
-    ####### I need a method for this!
     if covariate_vector == None:
-        covariate_vector = jnp.array([0,0,0,0,0,0,0,0,0,0,
-                              0,
-                            ])
-    n_cov = 1 #len(jnp.unique(covariate_vector)) 
+        covariate_vector = np.zeros((S,), dtype=np.int8)
+    n_cov = len(np.unique(covariate_vector))
+    covariate_vector = jnp.array(covariate_vector)
     
     # D_matrix
     D_matrix_ones = jnp.zeros((n_cov,S))
@@ -30,7 +27,7 @@ def model(data, mask, covariate_vector=None, priors_hyperparameters=None):
     D_matrix_ones_unsqueeze = jnp.expand_dims(D_matrix_ones, axis=(2,3))
 
 
-
+    # The Model
     V_plate = numpyro.plate('v_plate', V,dim=-1)
     S_plate = numpyro.plate('s_plate', S, dim=-2)
     D_plate = numpyro.plate('d_plate', len(data), dim=-3)
@@ -56,7 +53,7 @@ def model(data, mask, covariate_vector=None, priors_hyperparameters=None):
                                                jnp.full((V,), 1))
                           )
         
-        scale1 = numpyro.sample('scale1', dist.Uniform(jnp.full((V,), 0.01),
+        scale1 = numpyro.sample('scale1', dist.Uniform(jnp.full((V,), priors_hyperparameters['lowerBound_scale1']),
                                                     jnp.full((V,), 0.5))
                             )
         

@@ -6,7 +6,7 @@ import tqdm
 import jax.numpy as jnp
 
 
-def initialize(x, mask, visualize=False, subsample=True, idx=None):
+def initialize(x, mask, subsample=True, lower_bound_scale1=0.05, idx=None):
     
     if subsample==True:
         if idx==None:
@@ -19,14 +19,16 @@ def initialize(x, mask, visualize=False, subsample=True, idx=None):
         
     mu, sigma = _init_gmm(x, mask)
     
-    priors_hyperparameters, init_values = _estimate_priors(mu, sigma, visualize=visualize, shape=x.shape)
+    priors_hyperparameters, init_values = _estimate_priors(mu, sigma, lower_bound_scale1, shape=x.shape)
     
-    return {"prior_hyperparams": priors_hyperparameters,
+    init_state = {"prior_hyperparams": priors_hyperparameters,
             "init_values": init_values}
+    
+    return init_state
     
     
 
-def _init_gmm(x, mask):
+def _init_gmm(x, mask, metric='BIC'):
     _, _, V = x.shape
     
     num_components = [1, 2]
@@ -38,19 +40,26 @@ def _init_gmm(x, mask):
     for v in tqdm.tqdm(range(V), desc='GMM Initialization'):
 
         data = x[:, :, v][mask[:, :, v]].reshape(-1,1)
-        lowest_bic = np.infty
-        lowest_aic = np.infty
+        lowest_score = np.infty
         best_gmm = None
         best_n = -1
         
         if len(data) > 2:
             for n in num_components:
                 gmm = GMM(n_components = n).fit(data)
-                bic = gmm.bic(data)
-                aic = gmm.aic(data)
-            
-                if bic < lowest_bic:
-                    lowest_bic = bic
+                
+                if metric=="BIC":
+                    score = gmm.bic(data)
+
+                elif metric=="AIC":
+                    score = gmm.aic(data)
+                    
+                else:
+                    return "Incorrect Metric for Initialization. Metric could be AIC or BIC."
+                    
+                    
+                if score < lowest_score:
+                    lowest_score = score
                     best_gmm = gmm
                     best_n = n
                 
@@ -77,15 +86,12 @@ def _init_gmm(x, mask):
 
 
 
-def _estimate_priors(mu_, sigma_, visualize=False, shape=None):
+def _estimate_priors(mu_, sigma_, lower_bound_scale1=0.05, shape=None):
     N, S, V = shape
     K = 2
     
     params_sigmaF = gamma.fit(sigma_[:, 1])
     params_delta = gamma.fit(mu_[:, 1] - mu_[:, 0])
-    
-    if visualize==True:
-        pass
     
     mu0_b = np.mean(mu_[:, 0])
 
@@ -105,7 +111,8 @@ def _estimate_priors(mu_, sigma_, visualize=False, shape=None):
         'rate0_sigma_s': rate_sigma0_s,
         'concentration0_delta': concentration0_delta,
         'rate0_delta': rate0_delta,
-        'loc0_delta': loc0_delta  
+        'loc0_delta': loc0_delta,
+        'lowerBound_scale1': lower_bound_scale1,
     }
     
     ub_scale1 = np.median(np.sqrt(sigma_[:, 1]))
@@ -113,7 +120,7 @@ def _estimate_priors(mu_, sigma_, visualize=False, shape=None):
 
     init_locs = jnp.ones(V) * mu0_b
     init_weights = jnp.ones((S, V, K)) / K
-    init_scale1 = jnp.ones(V) * 0.01 #np.median(np.sqrt(sigma_[:, 0]))
+    init_scale1 = jnp.ones(V) * lower_bound_scale1 #np.median(np.sqrt(sigma_[:, 0]))
     init_sigmav = jnp.ones(V) * lb_scale1
     init_delta = jnp.expand_dims(jnp.array(mu_[:, 1] - mu_[:, 0]), axis=(0,1,2))
 
