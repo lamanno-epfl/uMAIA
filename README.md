@@ -1,10 +1,10 @@
-# MAIA
+# uMAIA
 Toolbox for the processing and analysis of MALDI-MSI data
 
 
 ## Installation
 
-To begin, install the environment by navigating to the /MAIA directory and running `python3 setup.py`.
+To begin, install the environment by navigating to the /uMAIA directory and running `python3 setup.py`.
 
 
 ### Gurobi
