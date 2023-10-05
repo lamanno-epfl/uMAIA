@@ -2,6 +2,9 @@
 Toolbox for the processing and analysis of MALDI-MSI data
 
 
+![alt text](figs/MAIA%20workflow.png)
+
+
 ## Installation
 
 To begin, install the environment by navigating to the /uMAIA directory and running `python3 setup.py`.
