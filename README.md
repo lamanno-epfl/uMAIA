@@ -2,7 +2,7 @@
 Toolbox for the processing and analysis of MALDI-MSI data
 
 
-![alt text](figs/MAIA%20workflow.png)
+![alt text](figs/uMaiaLogo.png)
 
 
 ## Installation
