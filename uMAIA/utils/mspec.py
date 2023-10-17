@@ -616,7 +616,7 @@ class SmzMLobj:
             self.expected_pixels = self.selected_pixels[1] - self.selected_pixels[0]
         if self.expected_pixels > self.num_spectra:
             self.expected_pixels = self.num_spectra
-        self.spectra = np.empty(self.expected_pixels, dtype=np.object)
+        self.spectra = np.empty(self.expected_pixels, dtype=np.object_)
         self.spectra_original = []
         self._I: np.ndarray = None  # shape = (pixels, self._mz_vals_at_res)
         self._small_access_cnt = 0
