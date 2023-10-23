@@ -52,4 +52,5 @@ tzdata==2023.3
 wheezy-template==3.2.1
 xmltodict==0.13.0
 zarr==2.16.0
+lxml==4.9.3
 notebook
