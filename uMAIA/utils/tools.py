@@ -96,7 +96,7 @@ def read_files(files:list):
         # load peakcalled file
         df = pd.read_csv(file, index_col=0)
         df_list.append(df)
-    df_list = np.array(df_list)
+    df_list = np.array(df_list, dtype=object)
     return df_list
 
 
@@ -208,7 +208,7 @@ def filterSparseImages(df_list, num_pixels=50, percentile=None, masks=None):
             df = df[df.num_pixels > np.percentile(df.num_pixels.values, percentile)] # keep if there are more than a certain number of signals inside the tissue
         df_list_2.append(df)
 
-    return np.array(df_list_2)
+    return np.array(df_list_2, dtype=object)
 
 
 def to_zarr(PATH_SAVE:str, acquisitions:list, df_filter:pd.DataFrame, images_list:list):

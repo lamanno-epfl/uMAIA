@@ -32,7 +32,7 @@ numpyro==0.12.1
 opencv-python==4.8.0.76
 opt-einsum==3.3.0
 optax==0.1.7
-pandas==2.0.3
+pandas==1.1.5
 pillow==10.0.0
 pyimzml==1.5.3
 pymzml==2.5.2
