@@ -8,24 +8,13 @@ Toolbox for the processing and analysis of MALDI-MSI data
 ## Installation
 
 To begin, create a new environment with 
-`conda create --name uMAIA_env python==3.9`
+`conda create --name uMAIA_env python==3.11.3`
 
 activate the environment with
 `conda activate uMAIA_env`
 
-conda install jupyter with
-`conda install jupyter`
-
-install the required packages
-`pip install -r requirements.txt`
-
-
-If you are experiencing issues during the installation with caches files, you may need to remove them.
-You can do so with the following commands:
-`conda clean -a`
-`python -m pip cache purge`
-`rm ~/.cache/pip -rf`
-`conda update --all`
+pip install the package
+`pip install --no-cache-dir uMAIA==0.2`
 
 
 ### Gurobi
