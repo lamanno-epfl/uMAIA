@@ -7,7 +7,7 @@ with open("requirements.txt", "r") as f:
     requirements = f.read().splitlines()
     
 setup(
-    name='MAIA',
+    name='uMAIA',
     version= __version__,
     packages=find_packages(),
     description='Toolbox for the processing and analysis of MALDI-MSI data',
