@@ -11,10 +11,11 @@ from numpyro.infer import SVI, TraceEnum_ELBO, init_to_value
 from numpyro.infer.autoguide import AutoDelta
 
 @config_enumerate
-def model(data, mask, covariate_vector=None, priors_hyperparameters=None):
+def model(data, mask, covariate_vector=None, priors_hyperparameters=None, flex_mean=0.5):
     N, S, V = data.shape
     K = 2
-    
+
+    print(f'FLEXMEAN:{flex_mean}')
     if covariate_vector == None:
         covariate_vector = np.zeros((S,), dtype=np.int8)
     n_cov = len(np.unique(covariate_vector))
@@ -72,8 +73,8 @@ def model(data, mask, covariate_vector=None, priors_hyperparameters=None):
         with V_plate:
             weights = numpyro.sample('weights',
                                   dist.Dirichlet(0.5 * jnp.ones(K)))
-            batch_error = numpyro.sample('error', dist.Uniform(jnp.full((S,V), -0.5),
-                                                    jnp.full((S,V), 0.5)))
+            batch_error = numpyro.sample('error', dist.Uniform(jnp.full((S,V), -flex_mean),
+                                                    jnp.full((S,V), flex_mean)))
     
             batch_term = b_lambda*b_gamma
             batch_term = batch_term + batch_error

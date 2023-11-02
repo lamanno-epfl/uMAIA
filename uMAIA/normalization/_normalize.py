@@ -19,9 +19,10 @@ def normalize(data,
               loss=None, 
               num_steps=5000,
               covariate_vector=None,
+              flex_mean=0.5,
               seed=42):
+
     
-   
     if init_state==None:
         init_state = initialize(data, mask, subsample=subsample, idx=idx)
     
@@ -60,7 +61,7 @@ def normalize(data,
     global_svi = SVI(model, global_guide, optim=optimizer, loss=loss)
     
     svi_result = global_svi.run(
-            random.PRNGKey(0), num_steps, data, mask, covariate_vector=covariate_vector, priors_hyperparameters=priors_hyperparameters)
+            random.PRNGKey(0), num_steps, data, mask, covariate_vector=covariate_vector, priors_hyperparameters=priors_hyperparameters, flex_mean=flex_mean)
     
     
     
