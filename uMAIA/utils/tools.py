@@ -101,7 +101,7 @@ def read_files(files:list):
 
 
 def read_images_masks(acquisitions:list,
-                      path_images:str, path_masks:str = None,
+                      path_images:str, path_masks:list = None,
                       gaussian_smoothing:bool = False, gaussian_sigma:float = 0.3,
                       log_transform:bool = True, epsilon:float = 0.0002):
     """ Reading images and masks saved for normalization step,
@@ -137,10 +137,18 @@ def read_images_masks(acquisitions:list,
     PATH_MZ = np.sort(list(root.group_keys()))
     
     
-    if path_masks:
-        masks_list = [np.load(os.path.join(path_masks, name, 'mask.npy')) for name in acquisitions]
-    else:
-        masks_list = [np.ones_like(root[PATH_MZ[0]][i_s][:]) for i_s in range(len(acquisitions))]
+    if path_masks is None:
+        masks_list = []
+
+        for i_s in range(len(acquisitions)):
+            for i_m in np.arange(len(PATH_MZ)):
+                try:
+                    m_ =  np.ones_like(root[PATH_MZ[i_m]][i_s][:])
+                    masks_list.append(m_)
+                    break
+                except:
+                    continue
+
     
     mask_ix_list = [np.argwhere(x.flatten()).flatten() for x in masks_list]
     
