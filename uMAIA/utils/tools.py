@@ -101,7 +101,7 @@ def read_files(files:list):
 
 
 def read_images_masks(acquisitions:list,
-                      path_images:str, path_masks:list = None,
+                      path_images:str, path_masks:list,
                       gaussian_smoothing:bool = False, gaussian_sigma:float = 0.3,
                       log_transform:bool = True, epsilon:float = 0.0002):
     """ Reading images and masks saved for normalization step,
@@ -135,22 +135,9 @@ def read_images_masks(acquisitions:list,
     
     root = zarr.open(path_images, mode='rb')
     PATH_MZ = np.sort(list(root.group_keys()))
-    
-    
-    if path_masks is None:
-        masks_list = []
-
-        for i_s in range(len(acquisitions)):
-            for i_m in np.arange(len(PATH_MZ)):
-                try:
-                    m_ =  np.ones_like(root[PATH_MZ[i_m]][i_s][:])
-                    masks_list.append(m_)
-                    break
-                except:
-                    continue
 
     
-    mask_ix_list = [np.argwhere(x.flatten()).flatten() for x in masks_list]
+    mask_ix_list = [np.argwhere(x.flatten()).flatten() for x in path_masks]
     
     # initialize two variables for the data and the mask
     x = np.ones((np.max([len(np.argwhere(x.flatten()).flatten()) for x in masks_list]), len(masks_list), len(PATH_MZ))) 
