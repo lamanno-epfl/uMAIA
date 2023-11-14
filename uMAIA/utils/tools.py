@@ -101,7 +101,7 @@ def read_files(files:list):
 
 
 def read_images_masks(acquisitions:list,
-                      path_images:str, path_masks:list,
+                      path_images:str, mask_list:list,
                       gaussian_smoothing:bool = False, gaussian_sigma:float = 0.3,
                       log_transform:bool = True, epsilon:float = 0.0002):
     """ Reading images and masks saved for normalization step,
@@ -115,8 +115,8 @@ def read_images_masks(acquisitions:list,
     path_images: str
         path to zarr file saved from the molecular matching step
         
-    path_masks: str
-        path to mask files (apart from the mask.npy extension)
+    mask_list: list
+        list of numpy arrays corresponding to images
         
     gaussian_smoothing: bool - default: True
         boolean indicator of applying gaussian filter on raw data before normalization
@@ -137,10 +137,10 @@ def read_images_masks(acquisitions:list,
     PATH_MZ = np.sort(list(root.group_keys()))
 
     
-    mask_ix_list = [np.argwhere(x.flatten()).flatten() for x in path_masks]
+    mask_ix_list = [np.argwhere(x.flatten()).flatten() for x in mask_list]
     
     # initialize two variables for the data and the mask
-    x = np.ones((np.max([len(np.argwhere(x.flatten()).flatten()) for x in masks_list]), len(masks_list), len(PATH_MZ))) 
+    x = np.ones((np.max([len(np.argwhere(x.flatten()).flatten()) for x in mask_list]), len(mask_list), len(PATH_MZ))) 
     mask = np.zeros_like(x, dtype=bool)
     
     if log_transform==True:
