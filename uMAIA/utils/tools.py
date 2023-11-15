@@ -171,11 +171,9 @@ def read_images_masks(acquisitions:list,
             x[:len(mask_ix_list[i_s]), i_s, i_v] = img_masked
             mask[:len(mask_ix_list[i_s]), i_s, i_v] = True 
 
-    if not path_masks:
-        masks_list = np.ones_like(x)
             
     print('Data Loaded Successfully.')
-    return x, mask, masks_list
+    return x, mask, mask_list
 
 
 def createSaveDirectory(path_save):
