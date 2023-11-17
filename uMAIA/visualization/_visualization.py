@@ -238,6 +238,7 @@ def plot_intensity(x: np.ndarray,
     
 def normalized_hist(x_tran: np.ndarray, x: np.ndarray, 
                     mask: np.ndarray,
+                    mask_2D_list: list,
                     svi_result: numpyro.infer.svi.SVIRunResult,
                     zarr_path: str,
                     mz_val: float = None,
@@ -300,12 +301,6 @@ def normalized_hist(x_tran: np.ndarray, x: np.ndarray,
         # find the indexes to the supplied mz values
         v = np.argmin(np.abs(mz_val - mz_list.astype(float)))
 
-    mask_2D = []#root[mz_list[v]][i_s][:]
-    for s in list(root[mz_list[v]].keys()):
-        mask_2D.append(
-            np.ones_like(root[mz_list[v]][s][:]).astype(bool)
-        )
-
     
     print(f'molecule susceptibility: {b_lambda[v].mean():.2f}')
 
@@ -355,7 +350,7 @@ def normalized_hist(x_tran: np.ndarray, x: np.ndarray,
         
         plt.subplot(gs[i,1])
         
-        img = place_image(mask_2D, x, v, s, np.log(epsilon))
+        img = place_image(mask_2D_list, x, v, s, np.log(epsilon))
         #print(x[:,s,v][mask[:,s,v]].sum())
         plt.imshow(img, cmap='Greys', interpolation='none',vmax=vmax_raw, vmin=np.log(epsilon))
         plt.axis('off')
@@ -363,7 +358,7 @@ def normalized_hist(x_tran: np.ndarray, x: np.ndarray,
             plt.title('Original')
             
         plt.subplot(gs[i,2])
-        img = place_image(mask_2D, x_tran, v, s, np.log(epsilon))
+        img = place_image(mask_2D_list, x_tran, v, s, np.log(epsilon))
         plt.imshow(img, cmap='Greys', interpolation='none',vmax=vmax_trans, vmin=np.log(epsilon))
         plt.axis('off')
         if i == 0:
