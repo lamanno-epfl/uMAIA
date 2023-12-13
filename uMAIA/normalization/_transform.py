@@ -2,20 +2,36 @@ import scipy.stats as sps
 from scipy.interpolate import interp1d
 import numpy as np
 import jax.numpy as jnp
+import os
 
-def transform(x, mask, svi_results):
+def transform(x, mask, svi_result):
     
-    weights = svi_results.params['weights_auto_loc']
-    locs = svi_results.params['locs_auto_loc']
-    scale1 = svi_results.params['scale1_auto_loc']
-    sigma_v = svi_results.params['sigma_v_auto_loc']
-    b_lambda = svi_results.params['b_lambda_auto_loc']
-    b_gamma = svi_results.params['b_gamma_auto_loc']
-    delta = svi_results.params['delta_auto_loc']
-    sigma_s = svi_results.params['sigma_s_auto_loc']
-    error = svi_results.params['error_auto_loc']
-    delta_ = svi_results.params['delta_']
-    loc0_delta = svi_results.params['loc0_delta']
+    if isinstance(svi_result, str):
+
+        weights = np.load(os.path.join(svi_result, 'weights.npy'))
+        locs = np.load(os.path.join(svi_result, 'locs.npy'))
+        scale1 = np.load(os.path.join(svi_result, 'scale1.npy'))
+        sigma_v = np.load(os.path.join(svi_result, 'sigma_v.npy'))
+        b_lambda = np.load(os.path.join(svi_result, 'b_lambda.npy'))
+        b_gamma = np.load(os.path.join(svi_result, 'b_gamma.npy'))
+        delta = np.load(os.path.join(svi_result, 'delta.npy'))
+        sigma_s = np.load(os.path.join(svi_result, 'sigma_s.npy'))
+        error = np.load(os.path.join(svi_result, 'error.npy'))
+        delta_ = np.load(os.path.join(svi_result, 'delta_.npy'))
+        loc0_delta = np.load(os.path.join(svi_result, 'loc0_delta.npy'))
+    
+    else:
+        weights = svi_result.params['weights_auto_loc']
+        locs = svi_result.params['locs_auto_loc']
+        scale1 = svi_result.params['scale1_auto_loc']
+        sigma_v = svi_result.params['sigma_v_auto_loc']
+        b_lambda = svi_result.params['b_lambda_auto_loc']
+        b_gamma = svi_result.params['b_gamma_auto_loc']
+        delta = svi_result.params['delta_auto_loc']
+        sigma_s = svi_result.params['sigma_s_auto_loc']
+        error = svi_result.params['error_auto_loc']
+        delta_ = svi_result.params['delta_']
+        loc0_delta = svi_result.params['loc0_delta']
     
     x_tran = np.zeros_like(x)
     M̂1 = locs 

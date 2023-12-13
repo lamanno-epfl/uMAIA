@@ -9,6 +9,7 @@ import anndata
 import os
 
 
+
 def extract_image_coordinates(coordinates, img_shape, values):
     """extract image from IBD files where coordinates are assigned to each pixel
 
@@ -261,6 +262,27 @@ def to_zarr(PATH_SAVE:str, acquisitions:list, df_filter:pd.DataFrame, images_lis
             img = img.reshape(img_shape)
             # save image to path
             root.create_dataset(f'{mz}/{s}', data=img)    
+
+
+def place_image(masks_list, tranformed_values, v, s, epsilon):
+    img = np.zeros(masks_list[s].shape).flatten()
+    #img[mask_list[s].flatten()] = np.exp(tranformed_values[:np.sum(mask_list[s]),s,v]) - epsilon
+    img[masks_list[s].flatten()] = tranformed_values[:np.sum(masks_list[s]),s,v]
+    img[~masks_list[s].flatten().astype(bool)] = epsilon
+    return img.reshape(masks_list[s].shape)
+    
+
+def to_zarr_normalised(PATH_originalZarr, PATH_normZarr, acquisitions, x_tran, masks_2D, small_num):
+    root = zarr.open(PATH_originalZarr, mode='rb')
+    mz_list = np.array(list(root.group_keys())) 
+    root = zarr.open(PATH_normZarr, mode='w')
+    
+    for i_v, v in enumerate(mz_list):
+        for s in np.arange(0, len(acquisitions)): # iterate over sections,
+    
+            img = place_image(masks_2D, x_tran, i_v, s, np.log(small_num))
+            root.create_dataset(f'{v}/{s}', data=img)
+
 
 
 def save_svi(svi_result: numpyro.infer.svi.SVIRunResult,

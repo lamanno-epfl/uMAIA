@@ -8,7 +8,7 @@ import scipy.stats as stats
 import anndata
 import tqdm
 import zarr
-
+import os
 
 def get_cmap(n, name='hsv'):
     '''Returns a function that maps each index in 0, 1, ..., n-1 to a distinct 
@@ -274,17 +274,31 @@ def normalized_hist(x_tran: np.ndarray, x: np.ndarray,
     mz_val: float
         correponding value of mass-to-charge ratio (m/z) for molecule v
     """
-    weights = svi_result.params['weights_auto_loc']
-    locs = svi_result.params['locs_auto_loc']
-    scale1 = svi_result.params['scale1_auto_loc']
-    sigma_v = svi_result.params['sigma_v_auto_loc']
-    b_lambda = svi_result.params['b_lambda_auto_loc']
-    b_gamma = svi_result.params['b_gamma_auto_loc']
-    delta = svi_result.params['delta_auto_loc']
-    sigma_s = svi_result.params['sigma_s_auto_loc']
-    error = svi_result.params['error_auto_loc']
-    delta_ = svi_result.params['delta_']
-    loc0_delta = svi_result.params['loc0_delta']
+    if isinstance(svi_result, str):
+        weights = np.load(os.path.join(svi_result, 'weights.npy'))
+        locs = np.load(os.path.join(svi_result, 'locs.npy'))
+        scale1 = np.load(os.path.join(svi_result, 'scale1.npy'))
+        sigma_v = np.load(os.path.join(svi_result, 'sigma_v.npy'))
+        b_lambda = np.load(os.path.join(svi_result, 'b_lambda.npy'))
+        b_gamma = np.load(os.path.join(svi_result, 'b_gamma.npy'))
+        delta = np.load(os.path.join(svi_result, 'delta.npy'))
+        sigma_s = np.load(os.path.join(svi_result, 'sigma_s.npy'))
+        error = np.load(os.path.join(svi_result, 'error.npy'))
+        delta_ = np.load(os.path.join(svi_result, 'delta_.npy'))
+        loc0_delta = np.load(os.path.join(svi_result, 'loc0_delta.npy'))
+    
+    else:
+        weights = svi_result.params['weights_auto_loc']
+        locs = svi_result.params['locs_auto_loc']
+        scale1 = svi_result.params['scale1_auto_loc']
+        sigma_v = svi_result.params['sigma_v_auto_loc']
+        b_lambda = svi_result.params['b_lambda_auto_loc']
+        b_gamma = svi_result.params['b_gamma_auto_loc']
+        delta = svi_result.params['delta_auto_loc']
+        sigma_s = svi_result.params['sigma_s_auto_loc']
+        error = svi_result.params['error_auto_loc']
+        delta_ = svi_result.params['delta_']
+        loc0_delta = svi_result.params['loc0_delta']
     
     N, S, V = x.shape
     fig = plt.figure(None,(15,10))
