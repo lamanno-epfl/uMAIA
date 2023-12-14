@@ -1,2 +1,2 @@
 from ._run import run
-from .peak_finder import PeakFinder
+from .peak_finder import *

@@ -7,7 +7,77 @@ from scipy.ndimage.filters import gaussian_filter
 import numpyro
 import anndata
 import os
+from skimage.measure import regionprops
 
+
+
+
+def load_ann(PATH_ANN:str):
+    """ Function to save matched molecules into zarr file
+    
+    Args:
+    ----
+    PATH_ANN: str
+        Path to the h5ad file
+    """
+
+    # load the file in question
+    h5ad = anndata.read_h5ad(PATH_ANN) 
+
+    return h5ad
+
+def visualise_image_h5ad(h5ad_file, mz):
+
+    # retrieve the complete set of observed molecules from section S
+    mz_values = h5ad_file.var.values.flatten()
+    img_shape = h5ad_file.uns['img_shape']
+    
+
+    # extract the image
+    argmin = np.argmin(np.abs(mz_values - mz))
+    if not np.abs(mz_values - mz)[argmin] <= 0.005:
+        print(f'Closest match found {np.abs(mz_values - mz)}')
+        
+    img = h5ad_file.X[:,argmin] # subset the images to include only those of interest
+    # reshape image
+    img = img.reshape(img_shape)
+
+    return img
+
+def singlecell_intensities(image_h5ad, label_image, df_ranges):
+    """Extract sum of intensities within regions indicated by label map
+    Args
+    ----
+    h5ad_file: h5ad object containing acquisition images
+    label_image: 2D Array
+        dimension the same as smz.img_shape. Represents individual entities in the image by integer values
+    df_ranges: pd.DataFrame
+        output from build_ranges_df
+    """
+    # Extract regions object, each entry a cell
+    list_regs = regionprops(label_image)
+    img_shape = image_h5ad.uns['img_shape']
+    
+    
+    mz_values = image_h5ad.var.values.flatten()
+    
+    df_singlecells = pd.DataFrame()
+    for i, (name, selected_row) in tqdm.tqdm(enumerate(df_ranges.iterrows()), total=len(df_ranges)):
+        img_listsum = []
+        
+        img = visualise_image_h5ad(image_h5ad, selected_row.mz_estimated)
+        
+        # iterate over cells
+        for cell in list_regs:
+            sum_ = 0
+            coords = cell.coords
+            for coord in coords:
+                sum_ += img[coord[0], coord[1]]
+            img_listsum.append(sum_)
+        df_singlecells[selected_row.mz_estimated] = img_listsum
+    # set row labels according to file labels
+    df_singlecells.index = [x.label for x in list_regs]
+    return df_singlecells
 
 
 def extract_image_coordinates(coordinates, img_shape, values):
