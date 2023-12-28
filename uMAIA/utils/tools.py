@@ -317,7 +317,7 @@ def to_zarr(PATH_SAVE:str, acquisitions:list, df_filter:pd.DataFrame, images_lis
                 mz_values_ref.append(df_match_sub.mz_estimated_total.values[i])
         idx_lipid = np.array(idx_lipid).astype(int)
         images_lipid = images.X[:,idx_lipid] # subset the images to include only those of interest
-        mz_values_ref = [f'{x:.4f}' for x in mz_values_ref] # corresponding mz to the subsetted images
+        mz_values_ref = [f'{x:.6f}' for x in mz_values_ref] # corresponding mz to the subsetted images
         del images # remove images from memory
 
 
