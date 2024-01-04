@@ -81,6 +81,15 @@ def _init_gmm(x, mask, metric='BIC'):
         
         
     mu_[:, 0] = np.percentile(mu_[:, 0], 25)
+
+    # set foreground mode mean where 0 tohighest value
+    ix_nonzero = mu_[:,1] != 0
+    foreground_median = np.median(mu_[ix_nonzero,1])
+    mu_[~ix_nonzero,1] = foreground_median
+
+    # set foreground mode std to minimum value
+    ix_zero = sigma_[:,1] < 1e-5
+    sigma_[ix_zero,1] = 0.1
     return (mu_, sigma_)
 
 
@@ -121,7 +130,8 @@ def _estimate_priors(mu_, sigma_, lower_bound_scale1=0.05, shape=None):
     init_locs = jnp.ones(V) * mu0_b
     init_weights = jnp.ones((S, V, K)) / K
     init_scale1 = jnp.ones(V) * lower_bound_scale1 #np.median(np.sqrt(sigma_[:, 0]))
-    init_sigmav = jnp.ones(V) * lb_scale1
+    #init_sigmav = jnp.ones(V) * lb_scale1
+    init_sigmav = jnp.array(sigma_[:,1])
     init_delta = jnp.expand_dims(jnp.array(mu_[:, 1] - mu_[:, 0]), axis=(0,1,2))
 
     init_values = {

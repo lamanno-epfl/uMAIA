@@ -22,9 +22,20 @@ def normalize(data,
               flex_mean=0.5,
               seed=42):
 
-    
+
+    N, S, V = data.shape
+    # initialise via GMM
     if init_state==None:
         init_state = initialize(data, mask, subsample=subsample, idx=idx)
+
+    # retrieve covariate vector
+    if covariate_vector == None:
+        covariate_vector = np.zeros((S, ), dtype=np.int8)
+    n_cov = len(np.unique(covariate_vector)) 
+    covariate_vector = jnp.array(covariate_vector)
+
+    # modify delta to reflect covariates
+    init_state['init_values']['delta'] = jnp.tile(init_state['init_values']['delta'], (n_cov, 1, 1, 1))
     
     if subsample==True:
         if idx==None:
@@ -38,7 +49,7 @@ def normalize(data,
     
     priors_hyperparameters = init_state["prior_hyperparams"]
     init_values = init_state["init_values"]
-    N, S, V = data.shape
+    
     
     if optimizer == None:
         optimizer = optax.adam(learning_rate=0.001, b1=0.95, b2=0.99)
@@ -63,12 +74,6 @@ def normalize(data,
     svi_result = global_svi.run(
             random.PRNGKey(0), num_steps, data, mask, covariate_vector=covariate_vector, priors_hyperparameters=priors_hyperparameters, flex_mean=flex_mean)
     
-    
-    
-    if covariate_vector == None:
-        covariate_vector = np.zeros((S, ), dtype=np.int8)
-    n_cov = len(np.unique(covariate_vector)) 
-    covariate_vector = jnp.array(covariate_vector)
     
     # D_matrix
     D_matrix_ones = jnp.zeros((n_cov,S))

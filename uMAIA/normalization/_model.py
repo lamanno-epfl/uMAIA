@@ -15,18 +15,16 @@ def model(data, mask, covariate_vector=None, priors_hyperparameters=None, flex_m
     N, S, V = data.shape
     K = 2
 
-    print(f'FLEXMEAN:{flex_mean}')
     if covariate_vector == None:
         covariate_vector = np.zeros((S,), dtype=np.int8)
     n_cov = len(np.unique(covariate_vector))
     covariate_vector = jnp.array(covariate_vector)
-    
+
     # D_matrix
     D_matrix_ones = jnp.zeros((n_cov,S))
     for i, c in enumerate(covariate_vector):
         D_matrix_ones = D_matrix_ones.at[c, i].set(1)
     D_matrix_ones_unsqueeze = jnp.expand_dims(D_matrix_ones, axis=(2,3))
-
 
     # The Model
     V_plate = numpyro.plate('v_plate', V,dim=-1)
@@ -46,9 +44,10 @@ def model(data, mask, covariate_vector=None, priors_hyperparameters=None, flex_m
     with V_plate:
         with C_plate:
             delta = numpyro.sample('delta', 
-                                dist.Gamma(jnp.full((n_cov,1, 1, V), priors_hyperparameters['concentration0_delta']) ,
-                                            jnp.full((n_cov,1, 1, V), priors_hyperparameters['rate0_delta']))
-                              ) + priors_hyperparameters['loc0_delta']
+                                dist.Normal(jnp.full((n_cov,1, 1, V), 3.0) ,
+                                            jnp.full((n_cov,1, 1, V), 0.8))
+                              ) 
+
          
         locs = numpyro.sample('locs', dist.Normal(jnp.full((V,), priors_hyperparameters['mu0_b']) ,
                                                jnp.full((V,), 1))
@@ -66,8 +65,9 @@ def model(data, mask, covariate_vector=None, priors_hyperparameters=None, flex_m
                                 dist.Uniform(jnp.full((V,), -2.0),
                                              jnp.full((V,),  2.0)))
         
-        
     delta_ = jnp.sum(jnp.sum(delta * D_matrix_ones_unsqueeze, axis=-4), axis=-2)
+
+
     
     with S_plate:
         with V_plate:

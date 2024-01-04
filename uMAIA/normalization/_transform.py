@@ -5,6 +5,7 @@ import jax.numpy as jnp
 import os
 
 def transform(x, mask, svi_result):
+
     
     if isinstance(svi_result, str):
 
@@ -18,7 +19,8 @@ def transform(x, mask, svi_result):
         sigma_s = np.load(os.path.join(svi_result, 'sigma_s.npy'))
         error = np.load(os.path.join(svi_result, 'error.npy'))
         delta_ = np.load(os.path.join(svi_result, 'delta_.npy'))
-        loc0_delta = np.load(os.path.join(svi_result, 'loc0_delta.npy'))
+        locs_resampled = locs
+        #loc0_delta = np.load(os.path.join(svi_result, 'loc0_delta.npy'))
     
     else:
         weights = svi_result.params['weights_auto_loc']
@@ -31,33 +33,28 @@ def transform(x, mask, svi_result):
         sigma_s = svi_result.params['sigma_s_auto_loc']
         error = svi_result.params['error_auto_loc']
         delta_ = svi_result.params['delta_']
-        loc0_delta = svi_result.params['loc0_delta']
-    
-    x_tran = np.zeros_like(x)
-    M̂1 = locs 
+        locs_resampled = locs
+        #loc0_delta = svi_result.params['loc0_delta']
+
+    N, S, V = x.shape
+    x_MAIA = np.zeros_like(x)
+
+    M̂1 = locs
     Ŝs1 = scale1
     Ŝs2 = sigma_v
-
-    for v in range(len(locs)):
-        #icdf = make_inv_cdf(M̂1[v], M̂2[v], Ŝs1 + _sigmav1[v], Ŝs2 + _sigmav2[v])
-        
-        for s in range(len(sigma_s)):
-            try:
-                M̂2 = locs + delta_[s,v]
-            except:
-                M̂2 = locs + delta[v]
-            icdf = make_inv_cdf(M̂1[v], M̂2[v], Ŝs1[v], Ŝs2[v])
-            #x_tran[:,s, v][mask[:,s,v]] = transform_byicdf(x[:,s,v][mask[:,s,v]], _mu1[s, v], _mu2[s, v], _sigmas1[s] + _sigmav1[v], _sigmas2[s] + _sigmav2[v],icdf)
-            
-            try:
-                x_tran[:,s, v][mask[:,s,v]] = transform_byicdf(x[:,s,v][mask[:,s,v]], locs[v], locs[v] + delta_[s,v] + b_gamma[s]*b_lambda[v] + error[s,v] + loc0_delta
-                                                        , scale1[v], sigma_v[v] + sigma_s[s] ,icdf)
-            except:
-                x_tran[:,s, v][mask[:,s,v]] = transform_byicdf(x[:,s,v][mask[:,s,v]], locs[v], locs[v] + delta[v,] + b_gamma[s]*b_lambda[v] + error[s,v] + loc0_delta
-                                                        , scale1[v], sigma_v[v] + sigma_s[s] ,icdf)
-        
     
-    return x_tran
+    for v in range(V):        
+        for s in range(S):
+            M̂2 = locs + delta_[s,v]
+            icdf = make_inv_cdf(M̂1[v], M̂2[v], Ŝs1[v], Ŝs2[v])
+            x_MAIA[:,s, v][mask[:,s,v]] = transform_byicdf(x[:,s,v][mask[:,s,v]],
+                                                           locs[v],
+                                                           locs[v] + delta_[s,v] + b_gamma[s]*b_lambda[v] + error[s,v],
+                                                           scale1[v],
+                                                           sigma_v[v] + sigma_s[s],
+                                                           icdf)
+            
+    return x_MAIA
 
 
 
