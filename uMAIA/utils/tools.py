@@ -211,7 +211,7 @@ def read_images_masks(acquisitions:list,
     mask_ix_list = [np.argwhere(x.flatten()).flatten() for x in mask_list]
     
     # initialize two variables for the data and the mask
-    x = np.ones((np.max([len(np.argwhere(x.flatten()).flatten()) for x in mask_list]), len(mask_list), len(PATH_MZ))) 
+    x = np.zeros((np.max([len(np.argwhere(x.flatten()).flatten()) for x in mask_list]), len(mask_list), len(PATH_MZ))) 
     mask = np.zeros_like(x, dtype=bool)
     
     if log_transform==True:
