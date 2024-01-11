@@ -439,7 +439,7 @@ def showMatchedImages(PATH_SAVE, mz_query, acquisitions, vmax='constant', figsiz
                 images.append(img)
             except:
                 #images.append(np.zeros(img.shape))
-                images.append(np.zeros(10,10)
+                images.append(np.zeros((10,10)))
         vm = np.max([np.percentile(image, 99) for image in images])
         for i_s, img in enumerate(images):
             plt.subplot(gs[i_s, im])
