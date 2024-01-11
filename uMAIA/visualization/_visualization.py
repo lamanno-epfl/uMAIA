@@ -236,15 +236,16 @@ def plot_intensity(x: np.ndarray,
     plt.show()
     
     
-def normalized_hist(x_tran: np.ndarray, x: np.ndarray, 
+def normalized_hist(x_MAIA: np.ndarray, x: np.ndarray, 
                     mask: np.ndarray,
                     mask_2D_list: list,
-                    svi_result: numpyro.infer.svi.SVIRunResult,
+                    svi_result,
                     zarr_path: str,
                     mz_val: float = None,
-                    v_ind: int = None,
-                    n_cov: int = 1,
+                    v: int = None,
+                    covariates: list= None,
                     epsilon: float = 0.0002,
+                    figsize=(15,80)
                     ):
     """ Function to plot the normalized vs raw data histogram and the fitted model
     
@@ -265,8 +266,8 @@ def normalized_hist(x_tran: np.ndarray, x: np.ndarray,
     v: int
         number of molecule to plot its intensites across sections
         
-    n_cov: int - default: 1
-        number of covariates
+    n_cov: list
+        list indicating which sections should be considered covariates
         
     epsilon: float - default: 0.0002
         small number to make sure log transform does not return NaN
@@ -275,6 +276,7 @@ def normalized_hist(x_tran: np.ndarray, x: np.ndarray,
         correponding value of mass-to-charge ratio (m/z) for molecule v
     """
     if isinstance(svi_result, str):
+        print('using saved values')
         weights = np.load(os.path.join(svi_result, 'weights.npy'))
         locs = np.load(os.path.join(svi_result, 'locs.npy'))
         scale1 = np.load(os.path.join(svi_result, 'scale1.npy'))
@@ -285,7 +287,8 @@ def normalized_hist(x_tran: np.ndarray, x: np.ndarray,
         sigma_s = np.load(os.path.join(svi_result, 'sigma_s.npy'))
         error = np.load(os.path.join(svi_result, 'error.npy'))
         delta_ = np.load(os.path.join(svi_result, 'delta_.npy'))
-        loc0_delta = np.load(os.path.join(svi_result, 'loc0_delta.npy'))
+        locs_resampled = locs
+        #loc0_delta = np.load(os.path.join(svi_result, 'loc0_delta.npy'))
     
     else:
         weights = svi_result.params['weights_auto_loc']
@@ -298,60 +301,68 @@ def normalized_hist(x_tran: np.ndarray, x: np.ndarray,
         sigma_s = svi_result.params['sigma_s_auto_loc']
         error = svi_result.params['error_auto_loc']
         delta_ = svi_result.params['delta_']
-        loc0_delta = svi_result.params['loc0_delta']
+        locs_resampled = locs
+        #loc0_delta = svi_result.params['loc0_delta']
     
     N, S, V = x.shape
-    fig = plt.figure(None,(15,10))
-    gs = plt.GridSpec(S,3)
-    
+
+    if np.all(covariates) == None:
+        covariates = np.zeros((S,), dtype=np.int8)
+    n_cov = len(np.unique(covariates))
+
+    # identify the sections that indicate the covariates
+    cov_sections = []
+    for cov in np.unique(covariates):
+        _ = np.argwhere(covariates == cov).flatten()[0]
+        cov_sections.append(_)
+
     root = zarr.open(zarr_path, mode='rb')
     mz_list = np.array(list(root.group_keys()))
 
     # identify the index that is closest to the given float
-    assert ((v_ind is not None) + (mz_val is not None)) > 0, 'one of mz_val or v_ind must be a value'
-    if v_ind:
-        v = v_ind
-    else:
+    assert ((v is not None) + (mz_val is not None)) > 0, 'one of mz_val or v_ind must be a value'
+
+    if v is None:
         # find the indexes to the supplied mz values
         v = np.argmin(np.abs(mz_val - mz_list.astype(float)))
+    else:
+        mz_val = mz_list[v]
 
+    fig = plt.figure(None,figsize)
+    gs = plt.GridSpec(S,3)
+      
     
     print(f'molecule susceptibility: {b_lambda[v].mean():.2f}')
-
+    
     cm = plt.cm.get_cmap('bwr')
     xmin, xmax = np.percentile(x[:,:,v][mask[:,:,v]], (0.1, 99.90))
     xmax += 1.
-    xnew = np.linspace(xmin, xmax, 50)
-    # vmax = np.exp(np.percentile(x[:,:,v][mask[:,:,v]], 99.9)) - epsilon
-    # 
-
+    xnew = np.linspace(xmin, xmax, 50) 
+    
     vmax_raw = np.percentile(x[:,:,v][mask[:,:,v]], 99.5)
-    vmax_trans = np.percentile(x_tran[:,:,v][mask[:,:,v]], 99.5)
-
+    vmax_trans = np.percentile(x_MAIA[:,:,v][mask[:,:,v]], 99.5)
+    
     for i, s in enumerate(range(S)):
         plt.subplot(gs[i,0])
-        # try:
-        #     #plt.title(f'section: {s}, sens: {b_gamma[s][0]:.2f}, lambda sum: {b_lambda[v]:.2f}, batch_factor: {(b_gamma[s]*b_lambda[v]):.2f}')
-        # except:
-            #plt.title(f'section: {s}, sens: {b_gamma[s]:.2f}, lambda sum: {b_lambda[v]:.2f}, batch_factor: {(b_gamma[s]*b_lambda[v]):.2f}')
         plt.hist(x[:,s,v][mask[:,s,v]], bins=30, density=True,color='gray', alpha=0.2)
-        plt.hist(x_tran[:,s,v][mask[:,s,v]], bins=30, density=True,color='k',histtype='step', alpha=0.9)
+        plt.hist(x_MAIA[:,s,v][mask[:,s,v]], bins=30, density=True,color='k',histtype='step', alpha=0.9)
         plt.axvline(locs[v], c="b")
         plt.plot(xnew, weights[s,v][0] * stats.norm(locs[v], scale1[v]).pdf(xnew), "b")
-
+    
         # foreground distribution
         try:
-            plt.axvline(locs[v] + delta_[s,v] + b_gamma[s] * b_lambda[v] + error[s,v] + loc0_delta, c="red")
-            plt.plot(xnew, weights[s,v][1] * stats.norm(locs[v] + delta_[s,v] + b_gamma[s] * b_lambda[v]+ error[s,v] + loc0_delta,
-                                                        sigma_v[v] + sigma_s[s]).pdf(xnew), "red")
+            plt.axvline(locs[v] + delta_[s,v] + b_gamma[s] * b_lambda[v] + error[s,v], c="red")
+            plt.plot(xnew, weights[s,v][1] * stats.norm(locs[v]+delta_[s,v] + b_gamma[s] * b_lambda[v]+error[s,v],
+                                                          sigma_v[v] + sigma_s[s]).pdf(xnew), "red")
         except:
             print('delta')
-            plt.axvline(locs[v] + delta[v] + b_gamma[s] * b_lambda[v] + loc0_delta, c="red")
-            plt.plot(xnew, weights[s,v][1] * stats.norm(locs[v]+ delta[v] + b_gamma[s] * b_lambda[v] + error[s,v] + loc0_delta,
-                                                        sigma_v[v] + sigma_s[s]).pdf(xnew), "red")
+            plt.axvline(locs[v] + delta[v] + b_gamma[s] * b_lambda[v], c="red")
+            plt.plot(xnew, weights[s,v][1] * stats.norm(locs[v]+delta[v] + b_gamma[s] * b_lambda[v] + error[s,v],
+                                                          sigma_v[v] + sigma_s[s]).pdf(xnew), "red")
+    
         
-        for c in range(n_cov):
-            plt.axvline(np.unique(locs[v] + delta_[:,v])[c], c="black", alpha=0.5, linestyle='--')
+        for c in cov_sections:
+            plt.axvline(locs[v] + delta_[c,v], c="black", alpha=0.5, linestyle='--')
         plt.axvline(locs[v] + delta_[s,v], c="black")
         
         plt.xlim(xmin-2., xmax)
@@ -365,21 +376,19 @@ def normalized_hist(x_tran: np.ndarray, x: np.ndarray,
         plt.subplot(gs[i,1])
         
         img = place_image(mask_2D_list, x, v, s, np.log(epsilon))
-        #print(x[:,s,v][mask[:,s,v]].sum())
         plt.imshow(img, cmap='Greys', interpolation='none',vmax=vmax_raw, vmin=np.log(epsilon))
         plt.axis('off')
         if i == 0:
             plt.title('Original')
             
         plt.subplot(gs[i,2])
-        img = place_image(mask_2D_list, x_tran, v, s, np.log(epsilon))
+        img = place_image(mask_2D_list, x_MAIA, v, s, np.log(epsilon))
         plt.imshow(img, cmap='Greys', interpolation='none',vmax=vmax_trans, vmin=np.log(epsilon))
         plt.axis('off')
         if i == 0:
             plt.title('Normalized')
         
     plt.colorbar()
-    
     
     plt.suptitle(f'm/z value: {mz_val}')
     plt.tight_layout()
@@ -429,7 +438,8 @@ def showMatchedImages(PATH_SAVE, mz_query, acquisitions, vmax='constant', figsiz
                 img = root[mz][i_s][:]
                 images.append(img)
             except:
-                images.append(np.zeros(img.shape))
+                #images.append(np.zeros(img.shape))
+                images.append(np.zeros(10,10)
         vm = np.max([np.percentile(image, 99) for image in images])
         for i_s, img in enumerate(images):
             plt.subplot(gs[i_s, im])
