@@ -22,7 +22,7 @@ def load_ann(PATH_ANN:str):
     """
 
     # load the file in question
-    h5ad = anndata.read_h5ad(PATH_ANN) 
+    h5ad = anndata.read_h5ad(PATH_ANN, backed='r') 
 
     return h5ad
 
