@@ -244,6 +244,10 @@ def read_images_masks(acquisitions:list,
 
             
     print('Data Loaded Successfully.')
+
+    # correct for empty images
+    masks_sum = np.sum(masks, axis=2).astype(bool)
+    masks[:,:,:] = masks_sum[:,:,None]
     return x, mask, mask_list
 
 
@@ -351,6 +355,7 @@ def to_zarr_normalised(PATH_originalZarr, PATH_normZarr, acquisitions, x_tran, m
         for s in np.arange(0, len(acquisitions)): # iterate over sections,
     
             img = place_image(masks_2D, x_tran, i_v, s, np.log(small_num))
+            img = np.exp(img) - small_num
             root.create_dataset(f'{v}/{s}', data=img)
 
 
