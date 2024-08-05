@@ -19,6 +19,7 @@ def normalize(data,
               loss=None, 
               num_steps=5000,
               covariate_vector=None,
+              D_matrix_ones=None,
               flex_mean=0.5,
               seed=42):
 
@@ -33,6 +34,9 @@ def normalize(data,
         covariate_vector = np.zeros((S, ), dtype=np.int8)
     n_cov = len(np.unique(covariate_vector)) 
     covariate_vector = jnp.array(covariate_vector)
+
+    if D_matrix_ones != None:
+        n_cov = D_matrix_ones.shape[0]
 
     # modify delta to reflect covariates
     init_state['init_values']['delta'] = jnp.tile(init_state['init_values']['delta'], (n_cov, 1, 1, 1))
@@ -72,13 +76,16 @@ def normalize(data,
     global_svi = SVI(model, global_guide, optim=optimizer, loss=loss)
     
     svi_result = global_svi.run(
-            random.PRNGKey(0), num_steps, data, mask, covariate_vector=covariate_vector, priors_hyperparameters=priors_hyperparameters, flex_mean=flex_mean)
+            random.PRNGKey(0), num_steps, data, mask, covariate_vector=covariate_vector, D_matrix_ones=D_matrix_ones, priors_hyperparameters=priors_hyperparameters, flex_mean=flex_mean)
     
     
     # D_matrix
-    D_matrix_ones = jnp.zeros((n_cov,S))
-    for i, c in enumerate(covariate_vector):
-        D_matrix_ones = D_matrix_ones.at[c, i].set(1)
+    if D_matrix_ones == None:
+        D_matrix_ones = jnp.zeros((n_cov,S))
+        for i, c in enumerate(covariate_vector):
+            D_matrix_ones = D_matrix_ones.at[c, i].set(1)
+    else:
+        print('Using design matrix')
     D_matrix_ones_unsqueeze = jnp.expand_dims(D_matrix_ones, axis=(2,3))
 
     svi_result.params['delta_'] = jnp.sum(jnp.sum(svi_result.params['delta_auto_loc'] * D_matrix_ones_unsqueeze, axis=-4), axis=-2)

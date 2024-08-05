@@ -246,8 +246,8 @@ def read_images_masks(acquisitions:list,
     print('Data Loaded Successfully.')
 
     # correct for empty images
-    masks_sum = np.sum(masks, axis=2).astype(bool)
-    masks[:,:,:] = masks_sum[:,:,None]
+    masks_sum = np.sum(mask, axis=2).astype(bool)
+    mask[:,:,:] = masks_sum[:,:,None]
     return x, mask, mask_list
 
 

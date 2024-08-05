@@ -41,7 +41,7 @@ def transform(x, mask, svi_result):
 
     M̂1 = locs
     Ŝs1 = scale1
-    Ŝs2 = sigma_v
+    Ŝs2 = sigma_v * 3.
     
     for v in range(V):        
         for s in range(S):

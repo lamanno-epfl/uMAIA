@@ -15,7 +15,7 @@ threadpool_limits(4)
 
 
 
-def match(MAX_DIST, df_list, parameters=None):
+def match(MAX_DIST, df_list, parameters=None, fh_path = 'output_match.txt'):
 
     df_concat = np.concatenate([x.mz_estimated.values for x in df_list])
     range_ = np.floor(df_concat).min(), np.ceil(df_concat).max()
@@ -25,8 +25,10 @@ def match(MAX_DIST, df_list, parameters=None):
     df_matched = pd.DataFrame(columns = ['molecule_ID','min','max','mz_estimated', 'section_ix', 'concentration'])
     MOL_ID = 0
     ROW_ID = 0
+
+    fh = open(fh_path, 'w')
     
-    for i, RANGE in tqdm.tqdm(enumerate(ranges), total=len(ranges)):
+    for i, RANGE in tqdm.tqdm(enumerate(ranges), total=len(ranges), file=fh):
         mz, NUM_S, NUM_PERMS = set_up(df_list, RANGE, parameters)
 
         if len(np.concatenate(mz)) <= 1 or len(np.nonzero([len(x) for x in mz])[0]) <= 1:
@@ -65,6 +67,7 @@ def match(MAX_DIST, df_list, parameters=None):
                     ROW_ID += 1
 
     df_matched = df_matched.merge(df_matched.groupby('molecule_ID')['mz_estimated'].mean(), on='molecule_ID', suffixes=('', '_total'))
+    fh.close()
     return df_matched
 
 

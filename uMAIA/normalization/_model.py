@@ -11,7 +11,7 @@ from numpyro.infer import SVI, TraceEnum_ELBO, init_to_value
 from numpyro.infer.autoguide import AutoDelta
 
 @config_enumerate
-def model(data, mask, covariate_vector=None, priors_hyperparameters=None, flex_mean=0.5):
+def model(data, mask, covariate_vector=None, D_matrix_ones=None, priors_hyperparameters=None, flex_mean=0.5):
     N, S, V = data.shape
     K = 2
 
@@ -20,10 +20,13 @@ def model(data, mask, covariate_vector=None, priors_hyperparameters=None, flex_m
     n_cov = len(np.unique(covariate_vector))
     covariate_vector = jnp.array(covariate_vector)
 
-    # D_matrix
-    D_matrix_ones = jnp.zeros((n_cov,S))
-    for i, c in enumerate(covariate_vector):
-        D_matrix_ones = D_matrix_ones.at[c, i].set(1)
+    # D_matrix construction
+    if D_matrix_ones == None:
+        D_matrix_ones = jnp.zeros((n_cov,S))
+        for i, c in enumerate(covariate_vector):
+            D_matrix_ones = D_matrix_ones.at[c, i].set(1)
+    else:
+        n_cov = D_matrix_ones.shape[0]
     D_matrix_ones_unsqueeze = jnp.expand_dims(D_matrix_ones, axis=(2,3))
 
     # The Model
