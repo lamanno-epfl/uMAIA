@@ -45,10 +45,18 @@ def model(data, mask, covariate_vector=None, D_matrix_ones=None, priors_hyperpar
         
       
     with V_plate:
+        delta_v = numpyro.sample('delta_v', 
+                                dist.Normal(jnp.full((V), 3.0) ,
+                                            jnp.full((V), 0.8))
+                              ) 
         with C_plate:
+            # delta = numpyro.sample('delta', 
+            #                     dist.Normal(jnp.full((n_cov,1, 1, V), 3.0) ,
+            #                                 jnp.full((n_cov,1, 1, V), 0.8))
+            #                   ) 
             delta = numpyro.sample('delta', 
-                                dist.Normal(jnp.full((n_cov,1, 1, V), 3.0) ,
-                                            jnp.full((n_cov,1, 1, V), 0.8))
+                                dist.Normal(jnp.full((n_cov,1, 1, V), delta_v) ,
+                                            jnp.full((n_cov,1, 1, V), 0.1))
                               ) 
 
          
