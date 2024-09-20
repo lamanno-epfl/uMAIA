@@ -15,7 +15,7 @@ threadpool_limits(4)
 
 
 
-def match(MAX_DIST, df_list, parameters=None, fh_path = 'output_match.txt'):
+def match(MAX_DIST, df_list, parameters=None, fh_path = 'output_match.txt', model_env='env1',num_threads=8):
 
     df_concat = np.concatenate([x.mz_estimated.values for x in df_list])
     range_ = np.floor(df_concat).min(), np.ceil(df_concat).max()
@@ -35,7 +35,7 @@ def match(MAX_DIST, df_list, parameters=None, fh_path = 'output_match.txt'):
             continue
             
         
-        set_list, permutation = retrieve_setlist(mz=mz, NUM_S=NUM_S, NUM_PERMS=NUM_PERMS, MAX_DIST=MAX_DIST)
+        set_list, permutation = retrieve_setlist(mz=mz, NUM_S=NUM_S, NUM_PERMS=NUM_PERMS, MAX_DIST=MAX_DIST, model_env=model_env, num_threads=num_threads)
         if len(set_list) == 0:
             for section_ix in permutation:
                 df_tmp = df_list[section_ix]
@@ -86,8 +86,8 @@ def set_up(df_list, RANGE, parameters):
         NUM_PERMS = NUM_S * 2
     return mz, NUM_S, NUM_PERMS
 
-def retrieve_setlist(mz, NUM_S, NUM_PERMS, MAX_DIST):
-    MM = MoleculeMatcher(mz=mz, NUM_SKIP=int(np.ceil(NUM_S / 2)), NUM_PERMS=NUM_PERMS, MAX_DIST=MAX_DIST)
+def retrieve_setlist(mz, NUM_S, NUM_PERMS, MAX_DIST, model_env, num_threads):
+    MM = MoleculeMatcher(mz=mz, NUM_SKIP=int(np.ceil(NUM_S / 2)), NUM_PERMS=NUM_PERMS, MAX_DIST=MAX_DIST, model_env=model_env, num_threads=num_threads)
     try: 
         permutation, output, selected_edges, obj_val, edge_cost, edges_unique = MM.assess_permutations()
     except:

@@ -39,7 +39,7 @@ class MoleculeMatcher:
     """
 
 
-    def __init__(self, mz, mzPermutations=None, NUM_SKIP=2, NUM_PERMS=10, STD_NORMAL_NOISE=0.01, K=3, MAX_DIST=0.1, num_threads=4):
+    def __init__(self, mz, mzPermutations=None, NUM_SKIP=2, NUM_PERMS=10, STD_NORMAL_NOISE=0.01, K=3, MAX_DIST=0.1, num_threads=4, model_env='env1'):
         self.mz = np.array(mz, dtype=object)
         self.NUM_SKIP = NUM_SKIP
         self.NUM_PERMS = NUM_PERMS
@@ -48,6 +48,7 @@ class MoleculeMatcher:
         self.K = max(self.K, self.NUM_SKIP)
         self.MAX_DIST = MAX_DIST
         self.num_threads = num_threads
+        self.model_env = model_env
         
         self.numSections = len(self.mz)
         if mzPermutations is None:
@@ -218,7 +219,8 @@ class MoleculeMatcher:
             objective value affiliated with optimized solution
         """
         # Build model m here
-        m = gp.Model('netflow')
+
+        m = gp.Model(self.model_env)
         m.Params.LogToConsole = 0 # suppress output
         m.Params.Threads = self.num_threads
         x = m.addMVar(shape=len(edge_cost),  vtype=gp.GRB.BINARY, name="x")
@@ -230,6 +232,7 @@ class MoleculeMatcher:
         # Compute optimal solution
         m.optimize()
 
+        
         output = x.X
         selected_edges = np.array(output, dtype=bool)
         selected_edges = np.array(list(edge_cost), dtype=object)[selected_edges]
