@@ -1,6 +1,5 @@
 # uMAIA
-Toolbox for the processing and analysis of MALDI-MSI data
-
+Toolbox for the processing and analysis of MALDI-MSI data. For details please see our preprint on [BioRxiv] ([https://www.genome.gov/](https://www.biorxiv.org/content/10.1101/2024.08.20.608739v2))
 
 ![alt text](figs/uMaiaLogo.png)
 
