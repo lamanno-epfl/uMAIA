@@ -54,6 +54,57 @@ def plot_freqmz(smz, mzrange:tuple, figsize:tuple=(30,10), ylim:int=1000, thresh
 
     return PF
 
+# check of the images retrieved from here. useful to check for reference compounds
+def visualize_ranges_test(smz, PF, clip=100, img_shape=None):
+    """
+    Extract images from the smzObj according to extracted ranges defined in df and save into AnnData object (.h5ad) format
+    
+    Args
+    ----
+    smz: smzObj
+    df: pd.DataFrame
+        dataframe containing extracted ranges from smz. Relevant columns are ['min', 'max', 'mz_estimated']
+    filepath: str
+        path to save .h5ad file
+    mz_list: list[float], optional
+        list containing m/z values of molecules desired for imaging. Approximations are made if the mz value is not present in df.
+        no value provided will save all molecules present in df by default
+    normalization: str or float, default='tic'
+        indication of normalization form. when 'tic' is provided, images are normalized by the 
+    clip: int, optional
+        percentile to clip images
+        default, no clipping
+    """
+    
+    tic_pixels = np.array(smz.S.sum(axis=1)).flatten()
+    
+    if img_shape is None:
+        img_shape = smz.img_shape
+
+    image_list = []
+    for i, r in tqdm.tqdm(enumerate(PF.ranges), total=len(PF.ranges)):
+
+        mz_select_ = (smz.mz_vals > r[0]) & (smz.mz_vals < r[1])
+        S_select = smz.S[:,mz_select_].toarray()
+        mz = smz.mz_vals[mz_select_]
+
+        img = np.sum(S_select, axis=1)
+        # tic normalization
+        img = img / tic_pixels
+
+        # clip to nth percentile
+        percentile = np.percentile(img, clip)
+        img = np.clip(img, 0, percentile)
+
+        if img.shape[0] < np.multiply(*img_shape):
+            img = extract_image_coordinates(smz.reader.coordinates, img_shape, img)
+        else:
+            img = img[:np.multiply(*img_shape)].reshape(img_shape)
+            
+        image_list.append(img)
+    return image_list
+
+
 
 def image_mz(smz, df:pd.DataFrame, mz_list:list, figsize:tuple=(15,15), ylim=None, cmap='inferno', img_shape=None, limit=0.01, normalize='tic', clip=99):
     """
