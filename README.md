@@ -15,6 +15,7 @@ activate the environment with
 `conda activate uMAIA_env`
 
 pip install the following packages, in the precise order:
+
 `pip install -U pip==25.1.1 setuptools==80.9.0 wheel==0.45.1`
 
 `pip install --only-binary=:all: --no-cache-dir numcodecs==0.12.0`
