@@ -16,8 +16,11 @@ activate the environment with
 
 pip install the following packages, in the precise order:
 `pip install -U pip==25.1.1 setuptools==80.9.0 wheel==0.45.1`
+
 `pip install --only-binary=:all: --no-cache-dir numcodecs==0.12.0`
+
 `pip install py-cpuinfo==9.0.0`
+
 `pip install cython==3.1.2`
 
 Next, clone the uMAIA repository with 
