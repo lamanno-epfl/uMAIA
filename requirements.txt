@@ -26,7 +26,7 @@ multipledispatch==1.0.0
 natsort==8.4.0
 networkx==3.1
 numba==0.58.0
-numcodecs==0.11.0
+numcodecs>=0.11.0,<0.13.0
 numpy==1.25.2
 numpyro==0.12.1
 opencv-python==4.8.0.76
@@ -41,6 +41,7 @@ pyro-api==0.1.2
 pyro-ppl==1.8.6
 regex==2023.8.8
 scikit-learn==1.3.0
+scikit-image==0.22.0
 scipy==1.11.1
 seaborn==0.12.2
 sympy==1.12
