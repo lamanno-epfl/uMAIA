@@ -83,7 +83,7 @@ def set_up(df_list, RANGE, parameters):
         NUM_PERMS = parameters['NUM_PERMS']
     else:
         NUM_S = len(mz)
-        NUM_PERMS = NUM_S * 2
+        NUM_PERMS = NUM_S# * 2
     return mz, NUM_S, NUM_PERMS
 
 def retrieve_setlist(mz, NUM_S, NUM_PERMS, MAX_DIST, model_env, num_threads):
