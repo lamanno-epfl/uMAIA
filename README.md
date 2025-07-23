@@ -24,6 +24,10 @@ pip install the following packages, in the precise order:
 
 `pip install cython==3.1.2`
 
+`pip install -U --no-deps scikit-image==0.22.0`
+
+`pip install -U --no-deps lazy_loader==0.4`
+
 Next, clone the uMAIA repository with 
 `git clone https://github.com/lamanno-epfl/uMAIA.git`
 and navigate into the directory with
