@@ -24,10 +24,6 @@ pip install the following packages, in the precise order:
 
 `pip install cython==3.1.2`
 
-`pip install -U --no-deps scikit-image==0.22.0`
-
-`pip install -U --no-deps lazy_loader==0.4`
-
 Next, clone the uMAIA repository with 
 `git clone https://github.com/lamanno-epfl/uMAIA.git`
 and navigate into the directory with
@@ -35,6 +31,10 @@ and navigate into the directory with
 
 Install the uMAIA package in developer mode with the following command:
 `pip install --no-build-isolation --no-cache-dir -e .`
+
+`pip install -U --no-deps scikit-image==0.22.0`
+
+`pip install -U --no-deps lazy_loader==0.4`
 
 Developer mode will allow you to modify source code in the package while still importing the module as normal. In other words you can edit your code in-place, and the changes are immediately reflected when you import or run the package.
 
