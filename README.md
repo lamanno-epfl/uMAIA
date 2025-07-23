@@ -64,16 +64,14 @@ MacOS:
 
 The peakcalling module can be run from the command line, given a list of datasets to process sequentially. This module assumes data is organized in the following way:
 
-rawData
-├── acquisition1_name
-│   ├── acquisition1_name.IBD
-│   └── acquisition1_name.imzml
-├── acquisition2_name
-│   ├── acquisition2_name.IBD
-│   └── acquisition2_name.imzml
-├── acquisition3_name
-│   ├── acquisition3_name.IBD
-│   └── acquisition3_name.imzml
+ * [rawData]
+ * [acquisition1_name]
+   * [acquisition1_name.IBD]
+   * [acquisition1_name.imzml]
+ * [acquisition2_name]
+   * [acquisition2_name.IBD]
+   * [acquisition2_name.imzml]
+ * [README.md]
 
 Then, open the file `sequential_commands.sh` and edit its contents (specifically the following line) to include the file names you want to process. For example, copy and paste these two lines into the parentheses inside the 'commands' section.
 
