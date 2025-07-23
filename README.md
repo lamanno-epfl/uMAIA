@@ -60,7 +60,7 @@ MacOS:
 `grbgetkey <licensekey>`
 
 
-### Command line tools
+## Command line tools
 
 The peakcalling module can be run from the command line, given a list of datasets to process sequentially. This module assumes data is organized in the following way:
 
@@ -88,7 +88,7 @@ The outputted comments will be saved to `output-sequentialcommand.txt` which wil
 
 Note that the default parameters to the peak caller have been optimised for an Orbitrap instrument. If you wish to specify parameters use the following flags `--mzresolution`, `--threshold_count`, `--approximate_interval`, `--smoothing`, `--spectrum_range`.
 
-### GPU usage restrictions
+## GPU usage restrictions
 If you intend on applying uMAIA's normalisation algorithm on a GPU, please note that JAX will automatically use between 75 and 90 % of available GPU memory. To indicate that you would only like to allocate memory that is needed, you may export an environment variable after activating the environment with `export XLA_PYTHON_CLIENT_PREALLOCATE=false`
 
 
