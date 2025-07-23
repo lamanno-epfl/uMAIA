@@ -73,6 +73,18 @@ The peakcalling module can be run from the command line, given a list of dataset
    * [acquisition2_name.imzml]
  * [README.md]
 
+  * [tree-md](./tree-md)
+ * [dir2](./dir2)
+   * [file21.ext](./dir2/file21.ext)
+   * [file22.ext](./dir2/file22.ext)
+   * [file23.ext](./dir2/file23.ext)
+ * [dir1](./dir1)
+   * [file11.ext](./dir1/file11.ext)
+   * [file12.ext](./dir1/file12.ext)
+ * [file_in_root.ext](./file_in_root.ext)
+ * [README.md](./README.md)
+ * [dir3](./dir3)
+
 Then, open the file `sequential_commands.sh` and edit its contents (specifically the following line) to include the file names you want to process. For example, copy and paste these two lines into the parentheses inside the 'commands' section.
 
 ```"python uMAIA/peak_finding/extract_images.py   --path_data 'rawData/'   --name 'acquisition1_name'"```
