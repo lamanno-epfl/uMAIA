@@ -66,17 +66,14 @@ The peakcalling module can be run from the command line, given a list of dataset
 
 ```bash
 .
-|-- __init__.py
-|-- molecule_matching
-|   |-- __init__.py
-|   |-- _match.py
-|   |-- _moleculematch.py
-|   `-- __pycache__
-|       |-- __init__.cpython-311.pyc
-|       |-- _match.cpython-311.pyc
-|       `-- _moleculematch.cpython-311.pyc
-|-- normalization
-|   |-- _initialize.py
+|-- rawData
+|   `-- acquisition1_name
+|       |-- acquisition1_name.IBD
+|       `-- acquisition1_name.imzml
+|   `-- acquisition2_name
+|       |-- acquisition2_name.IBD
+|       `-- acquisition2_name.imzml
+
 ```
 
 Then, open the file `sequential_commands.sh` and edit its contents (specifically the following line) to include the file names you want to process. For example, copy and paste these two lines into the parentheses inside the 'commands' section.
