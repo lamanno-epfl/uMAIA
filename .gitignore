@@ -1,0 +1,12 @@
+# Ignorar archivos temporales del sistema
+.nfs*
+
+# Ignorar notebooks si no quieres subirlos aún
+#JupyterNotebooks/
+
+# Ignorar metadata de instalación local
+uMAIA.egg-info/
+
+# Ignorar archivos de entorno
+#.yml
+

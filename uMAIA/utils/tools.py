@@ -160,16 +160,47 @@ def extract_contours_from_binary(mask):
     
     return contours
 
+#####################################################################################
+# aaf edited function:
+    # tp np array default behavior when dfs in df list equal number of rows
+    # 
+#####################################################################################
+# def read_files(files:list):
+#     df_list = []
+#     for file in files:
+#         # load peakcalled file
+#         df = pd.read_csv(file, index_col=0)
+#         df_list.append(df)
+#     df_list = np.array(df_list, dtype=object)
+#     return df_list
 
-def read_files(files:list):
+# type(df_list) >> numpy.ndarray
+# cada type(df_list[i]) >>  pandas.core.frame.DataFrame
+
+def read_files(files: list) -> np.ndarray:
+            # specify tipos annotation entra lista sale np.array 
+    '''
+        - This function was edited - 
+        No changes in input or output so function is replaced
+    '''
     df_list = []
     for file in files:
-        # load peakcalled file
         df = pd.read_csv(file, index_col=0)
-        df_list.append(df)
-    df_list = np.array(df_list, dtype=object)
-    return df_list
+        # Forzar a DataFrame si no lo es (le da igual el issue es np.array def )
+        df = pd.DataFrame(df)
+        df_list.append(df) # 
+    
+    # construir manual para evitar estructura homogenea 2D!
+    df_array = np.empty(len(df_list), dtype=object)
+    for i, df in enumerate(df_list):
+        df_array[i] = df
+    
+    # return df_list
+    return df_array
 
+#########################################################################################################
+    # end aaf
+#########################################################################################################
 
 def read_images_masks(acquisitions:list,
                       path_images:str, mask_list:list,
@@ -264,9 +295,31 @@ def createSaveDirectory(path_save):
         os.mkdir(path_save)
     else:
         print(f'Directory at {path_save} already exists')
-     
+
+#####################################################################################
+# aaf edited function:
+    # tp np array default behavior when dfs in df list equal number of rows
+    # 
+#####################################################################################
         
+# def filterSparseImages(df_list, num_pixels=50, percentile=None, masks=None):
+#     df_list_2 = []
+#     for i, df in enumerate(df_list):
+        
+#         if num_pixels:
+#             df = df[df.num_pixels > num_pixels]
+#         else:
+#             df = df[df.num_pixels > np.percentile(df.num_pixels.values, percentile)] # keep if there are more than a certain number of signals inside the tissue
+#         df_list_2.append(df)
+
+#     return np.array(df_list_2, dtype=object)
+
 def filterSparseImages(df_list, num_pixels=50, percentile=None, masks=None):
+    '''
+        - This function was edited - 
+        No changes in input or output so function is replaced
+    '''
+
     df_list_2 = []
     for i, df in enumerate(df_list):
         
@@ -276,7 +329,17 @@ def filterSparseImages(df_list, num_pixels=50, percentile=None, masks=None):
             df = df[df.num_pixels > np.percentile(df.num_pixels.values, percentile)] # keep if there are more than a certain number of signals inside the tissue
         df_list_2.append(df)
 
-    return np.array(df_list_2, dtype=object)
+    # return np.array(df_list_2, dtype=object) # EVITA ESTO!
+    # construir manual para evitar estructura homogenea 2D!
+    df_array = np.empty(len(df_list_2), dtype=object)
+    for i, df in enumerate(df_list_2):
+        df_array[i] = df
+        
+    return df_array
+
+#########################################################################################################
+    # end aaf
+#########################################################################################################
 
 
 def to_zarr(PATH_SAVE:str, acquisitions:list, df_filter:pd.DataFrame, images_list:list):

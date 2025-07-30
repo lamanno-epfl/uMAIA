@@ -516,5 +516,161 @@ def place_image(masks_list, tranformed_values, v, s, epsilon):
     img[masks_list[s].flatten()] = tranformed_values[:np.sum(masks_list[s]),s,v]
     img[~masks_list[s].flatten().astype(bool)] = epsilon
     return img.reshape(masks_list[s].shape)
+
+#########################################################################################################
+    # added funcions aalvarezf 
+#########################################################################################################
+
+# my imports:
+
+from pyimzml.ImzMLParser import ImzMLParser
+import seaborn as sns
+
+#########################################################################################################
+
+def plot_ion_image_from_imzml(path_data, target_mz, tolerance=1.0, log_scale=True, cmap='magma_r', figsize=(8, 6)):
+    """
+    Generate and display an ion image for a given m/z from an .imzML file.
+    """
+    parser = ImzMLParser(path_data)
+
+    # Determine image size
+    xs = [coord[0] for coord in parser.coordinates]
+    ys = [coord[1] for coord in parser.coordinates]
+    width = max(xs)
+    height = max(ys)
+
+    # Create image
+    image = np.zeros((height, width))
+
+    for idx, (x, y, z) in enumerate(parser.coordinates):
+        mzs, intensities = parser.getspectrum(idx)
+        for mz, intensity in zip(mzs, intensities):
+            if abs(mz - target_mz) <= tolerance:
+                image[y - 1, x - 1] = intensity
+                break
+
+    # Plot
+    plt.figure(figsize=figsize)
+    data = np.log1p(image) if log_scale else image
+    # plt.imshow(data, cmap=cmap, origin='lower')
+    im = plt.imshow(data, cmap=cmap, origin='lower')
+    plt.title(f"Ion image for m/z = {target_mz} ± {tolerance}")
+    # plt.colorbar(label="Intensity (log1p)" if log_scale else "Intensity") # too big... 
+    cbar = plt.colorbar(im, shrink=0.3)  # reduce la altura de la colorbar
+    cbar.set_label("Intensity (log1p)" if log_scale else "Intensity", fontsize=8)  # tamaño del texto
+    cbar.ax.tick_params(labelsize=8)  # tamaño de los números en la colorbar
+    # plt.xlabel("")
+    # plt.ylabel("")
+    plt.tight_layout()
+    plt.show()
+
+
+# spectrum of a given pixel
+def plot_mz4pix(smz, pixel): # dpi fuera ,dpi=150
+    '''
+        Plot m/z spectrum for a given pixel.
+        choose dpi or def 150
+    '''
+    
+    # Obtener spectro y convertir a array denso
+    intensities = smz.S[pixel].toarray().flatten()
+    
+    # Obtener valores de m/z
+    mz_vals = smz.mz_vals
+
+    # Filtrar solo intensidades > 0?? to rethink
+    mask = intensities > 0
+    mz_vals_plot = mz_vals[mask]
+    intensities_plot = intensities[mask]
+
+    # output def, rollo vars no!
+    # filename = f"{path_save}/{name}/mz_pixel_{pixel}.png"
+
+    # Ploteeeea
+    plt.figure(figsize=(10, 3))
+    plt.plot(mz_vals_plot, intensities_plot, color='purple')
+    plt.title(f"Spectrum pixel #{pixel}")
+    plt.xlabel("m/z")
+    plt.ylabel("intensity / relative abundance")
+    plt.grid(True)
+    # plt.savefig(filename, dpi=dpi, bbox_inches='tight')
+    plt.show()
+
+
+# Mean spectrum all pixels
+def plot_mean_spectrum(smz, mz_range=(300, 1200)):
+    """
+    Plot the mean spectrum (average intensity across all pixels) from an smz object.
+    """
+    # promedioo 
+    mean_intensity = smz.S.mean(axis=0).A1
+    mz = smz.mz_vals
+
+    plt.figure(figsize=(12, 4))
+    plt.plot(mz, mean_intensity, lw=1, color='#16b87c')
+    plt.xlabel("m/z")
+    plt.ylabel("Mean Intensity")
+    plt.title("Mean spectrum (across pixels)")
+    plt.xlim(*mz_range)
+    plt.ylim(bottom=0)
+    plt.grid(True)
+    plt.show()
+
+# To see coord that where measured/present in the imzML file after masking
+def plot_measured_coordinates(smz, point_size=0.5, color='red', figsize=(8, 3)):
+    """
+    Plot the spatial coordinates of all measured spectra from an smz object.
+        # this is not related to intensities, coord from smz!
+    """
+    coords = np.array([c[:2] for c in smz.reader.coordinates])[:smz.n_spectra]
+
+    plt.figure(figsize=figsize)
+    plt.scatter(coords[:, 0], coords[:, 1], s=point_size, color=color)
+    plt.gca().invert_yaxis()
+    plt.title("Measured coordinates (pixels with spectra)")
+    plt.xlabel("X")
+    plt.ylabel("Y")
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+
+# Where to put the threshold in molecule matching step???? 
+def plot_num_pixels_per_peak(df_list, threshold=3000, bins=100, figsize=(11, 4), alpha=0.5, palette='Set1'):
+    """
+    Plot histograms of 'num_pixels' for a list of DataFrames (one per df),
+    with a threshold line and automatic coloring.
+    """
+
+    num_dfs = len(df_list)
+    
+    # Colores.. 
+    if isinstance(palette, str):
+        colors = sns.color_palette(palette, num_dfs)
+    else:
+        colors = palette[:num_dfs]
+
+    plt.figure(figsize=figsize)
+
+    for i, df in enumerate(df_list):
+        plt.hist(df['num_pixels'], bins=bins, alpha=alpha,
+                 label=f'df {i+1}', color=colors[i])
+
+    plt.axvline(threshold, color='darkred', linestyle='--', label=f'Threshold = {threshold}')
+    plt.xlabel('Number of pixels per peak')
+    plt.ylabel('Number of molecules (peaks)')
+    plt.title('Num pixels by peak across dfs')
+    # plt.legend()
+    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
+    plt.grid(axis='y', linestyle='--', alpha=0.6)
+    # plt.tight_layout()
+    plt.tight_layout(rect=[0, 0, 0.85, 1])  # deja espacio a la derecha
+    plt.show()
+
+
+#########################################################################################################
+    # end aaf
+#########################################################################################################
     
     
