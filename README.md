@@ -1,5 +1,5 @@
 # uMAIA
-Toolbox for the processing and analysis of MALDI-MSI data. For details please see our Article on ([Nat Methods](https://www.nature.com/articles/s41592-025-02771-7))
+Toolbox for the processing and analysis of MALDI-MSI data. For details please see our Article on [Nat Methods](https://www.nature.com/articles/s41592-025-02771-7)
 
 ![alt text](figs/uMaiaLogo.png)
 
